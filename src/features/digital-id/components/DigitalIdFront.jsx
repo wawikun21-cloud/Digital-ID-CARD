@@ -8,7 +8,8 @@ import { PhoneIcon, GlobeIcon, MailIcon } from '../../../shared/components/icons
  * the card's portrait proportions. Kept free of QR/flip logic.
  */
 export default function DigitalIdFront({ digitalId }) {
-  const { name, position, secondaryRole, department, organization, id, photo, contact } = digitalId;
+  const { name, position, secondaryRole, department, organization, id, bio, photo, contact } =
+    digitalId;
 
   return (
     <div className="id-surface flex h-full w-full flex-col bg-paper px-[9%] py-[6%] text-ink">
@@ -43,6 +44,12 @@ export default function DigitalIdFront({ digitalId }) {
         <span className="mt-[0.8em] rounded-full border border-gold/50 px-[0.7em] py-[0.22em] text-[0.56em] font-medium uppercase tracking-[0.09em] text-gold">
           {department}
         </span>
+
+        {bio && (
+          <p className="mt-[0.9em] line-clamp-2 max-w-[92%] text-[0.62em] italic leading-snug text-ink-soft/90">
+            “{bio}”
+          </p>
+        )}
       </div>
 
       <div className="h-px w-full bg-line" />

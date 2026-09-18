@@ -1,5 +1,6 @@
 import TextField from '../../../shared/components/TextField';
-import { PlusIcon, TrashIcon } from '../../../shared/components/icons';
+import TextAreaField from '../../../shared/components/TextAreaField';
+import { PlusIcon, TrashIcon, ResetIcon } from '../../../shared/components/icons';
 import { detectSocialPlatform } from '../utils/digitalIdUtils';
 import ProfilePhotoField from './ProfilePhotoField';
 import { SOCIAL_ICONS } from '../utils/socialIcons';
@@ -20,7 +21,15 @@ export default function DigitalIdForm({
   onAddSocialLink,
   onUpdateSocialLink,
   onRemoveSocialLink,
+  onResetToDefault,
 }) {
+  function handleResetToDefault() {
+    const confirmed = window.confirm(
+      'Reset every field back to the default details? This clears whatever is saved here and cannot be undone.',
+    );
+    if (confirmed) onResetToDefault();
+  }
+
   return (
     <form
       className="flex w-full flex-col gap-6 text-left"
@@ -63,6 +72,15 @@ export default function DigitalIdForm({
           label="Organization"
           value={digitalId.organization}
           onChange={(value) => onUpdateField('organization', value)}
+        />
+        <TextAreaField
+          id="field-bio"
+          label="Bio / motto"
+          placeholder="A short line that says who you are"
+          rows={2}
+          maxLength={120}
+          value={digitalId.bio ?? ''}
+          onChange={(value) => onUpdateField('bio', value)}
         />
         <TextField
           id="field-id"
@@ -144,6 +162,20 @@ export default function DigitalIdForm({
           Add social link
         </button>
       </fieldset>
+
+      <div className="flex flex-col items-start gap-1 border-t border-line pt-4">
+        <button
+          type="button"
+          onClick={handleResetToDefault}
+          className="flex items-center gap-1.5 text-xs font-medium text-ink-soft transition hover:text-maroon-light focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold"
+        >
+          <ResetIcon />
+          Reset to default details
+        </button>
+        <p className="text-[0.7rem] text-ink-soft/70">
+          Changes save automatically as you type — this clears them.
+        </p>
+      </div>
     </form>
   );
 }

@@ -1,12 +1,16 @@
 import { useCallback, useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import DigitalIdCard from '../components/DigitalIdCard';
 import DigitalIdForm from '../components/DigitalIdForm';
 import Drawer from '../../../shared/components/Drawer';
-import { PencilIcon } from '../../../shared/components/icons';
+import LoginForm from '../components/LoginForm';
+import { PencilIcon, LogOutIcon } from '../../../shared/components/icons';
+import { useAuth } from '../hooks/useAuth';
 import { useDigitalIdForm } from '../hooks/useDigitalIdForm';
 import { fetchDigitalId } from '../services/digitalIdService';
 
 export default function DigitalIdPage() {
+  const { authenticated, login, logout } = useAuth();
   const [error, setError] = useState(null);
   // Collapsed by default: the card is the point of the page, the form
   // is the thing you reach for.
@@ -21,6 +25,7 @@ export default function DigitalIdPage() {
     addSocialLink,
     updateSocialLink,
     removeSocialLink,
+    resetToDefault,
   } = useDigitalIdForm();
 
   useEffect(() => {
@@ -39,27 +44,23 @@ export default function DigitalIdPage() {
     };
   }, [loadDigitalId]);
 
+  if (!authenticated) {
+    return <LoginForm onLogin={login} />;
+  }
+
   return (
     <main className="flex min-h-svh flex-col items-center bg-cream px-6 py-14">
-      <div className="w-full max-w-md">
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <p className="font-mono text-xs font-semibold uppercase tracking-[0.2em] text-gold">
-              Digital ID
-            </p>
-          </div>
-          {digitalId && !error && (
-            <button
-              type="button"
-              onClick={() => setEditorOpen(true)}
-              aria-expanded={editorOpen}
-              className="mt-3 flex shrink-0 items-center gap-2 rounded-full border border-line bg-paper px-5 py-2.5 text-sm font-medium text-ink shadow-sm transition hover:border-gold/60 hover:text-maroon-light focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold"
-            >
-              <PencilIcon />
-              Edit details
-            </button>
-          )}
-        </div>
+      <div className="w-full max-w-md text-center">
+        <p className="font-mono text-xs font-semibold uppercase tracking-[0.2em] text-gold">
+          Digital ID
+        </p>
+        <h1 className="mt-3 font-serif text-3xl font-semibold text-ink">
+          Your credential, always on hand
+        </h1>
+        <p className="mt-3 text-sm leading-relaxed text-ink-soft">
+          Tilt it, flip it, scan it. Open the editor to change any field and the card updates
+          live — add a social link on the back and its icon is detected automatically.
+        </p>
       </div>
 
       <div className="mt-10 flex w-full max-w-md flex-col items-center">
@@ -78,6 +79,33 @@ export default function DigitalIdPage() {
               <DigitalIdCard digitalId={digitalId} />
             </div>
 
+            <button
+              type="button"
+              onClick={() => setEditorOpen(true)}
+              aria-expanded={editorOpen}
+              className="mt-8 flex items-center gap-2 rounded-full border border-line bg-paper px-5 py-2.5 text-sm font-medium text-ink shadow-sm transition hover:border-gold/60 hover:text-maroon-light focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold"
+            >
+              <PencilIcon />
+              Edit details
+            </button>
+
+            <div className="mt-3 flex items-center gap-4">
+              <Link
+                to={`/verify/${digitalId.id}`}
+                className="text-xs font-medium text-ink-soft underline decoration-line underline-offset-4 transition hover:text-maroon-light"
+              >
+                Preview the public view
+              </Link>
+              <button
+                type="button"
+                onClick={logout}
+                className="flex items-center gap-1.5 text-xs font-medium text-ink-soft transition hover:text-maroon-light focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold"
+              >
+                <LogOutIcon />
+                Log out
+              </button>
+            </div>
+
             <Drawer
               open={editorOpen}
               onClose={closeEditor}
@@ -91,6 +119,7 @@ export default function DigitalIdPage() {
                 onAddSocialLink={addSocialLink}
                 onUpdateSocialLink={updateSocialLink}
                 onRemoveSocialLink={removeSocialLink}
+                onResetToDefault={resetToDefault}
               />
             </Drawer>
           </>
