@@ -19,7 +19,7 @@ export default function DigitalIdBack({ digitalId, interactive = true }) {
 
   // Derived from the ID number unless the record pins its own value,
   // so editing the ID number re-points the QR code straight away.
-  const verifyUrl = qrData || buildVerifyUrl(id);
+  const verifyUrl = qrData || buildVerifyUrl();
 
   return (
     <div className="id-surface id-surface--dark id-guilloche flex h-full w-full flex-col items-center justify-between bg-ink px-[6%] py-[6%] text-paper">
