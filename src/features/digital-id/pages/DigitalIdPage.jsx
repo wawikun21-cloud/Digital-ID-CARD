@@ -1,16 +1,12 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
 import DigitalIdCard from '../components/DigitalIdCard';
 import DigitalIdForm from '../components/DigitalIdForm';
 import Drawer from '../../../shared/components/Drawer';
-import LoginForm from '../components/LoginForm';
-import { PencilIcon, LogOutIcon } from '../../../shared/components/icons';
-import { useAuth } from '../hooks/useAuth';
+import { PencilIcon } from '../../../shared/components/icons';
 import { useDigitalIdForm } from '../hooks/useDigitalIdForm';
 import { fetchDigitalId } from '../services/digitalIdService';
 
 export default function DigitalIdPage() {
-  const { authenticated, login, logout } = useAuth();
   const [error, setError] = useState(null);
   // Collapsed by default: the card is the point of the page, the form
   // is the thing you reach for.
@@ -43,10 +39,6 @@ export default function DigitalIdPage() {
       cancelled = true;
     };
   }, [loadDigitalId]);
-
-  if (!authenticated) {
-    return <LoginForm onLogin={login} />;
-  }
 
   return (
     <main className="flex min-h-svh flex-col items-center bg-cream px-6 py-14">
@@ -88,23 +80,6 @@ export default function DigitalIdPage() {
               <PencilIcon />
               Edit details
             </button>
-
-            <div className="mt-3 flex items-center gap-4">
-              <Link
-                to={`/verify/${digitalId.id}`}
-                className="text-xs font-medium text-ink-soft underline decoration-line underline-offset-4 transition hover:text-maroon-light"
-              >
-                Preview the public view
-              </Link>
-              <button
-                type="button"
-                onClick={logout}
-                className="flex items-center gap-1.5 text-xs font-medium text-ink-soft transition hover:text-maroon-light focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold"
-              >
-                <LogOutIcon />
-                Log out
-              </button>
-            </div>
 
             <Drawer
               open={editorOpen}

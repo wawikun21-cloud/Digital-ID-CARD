@@ -39,6 +39,7 @@ const MOCK_DIGITAL_ID = {
   },
   socialLinks: [
     { id: 'social-seed-1', url: 'https://www.facebook.com/iamdeanbaa' },
+    { id: 'social-seed-2', url: 'https://www.instagram.com/iamdeanbaa?stkn=M3NqNDI4NGF5Y3lr' },
   ],
   issued: '2026-01-15',
   expires: '2028-01-15',

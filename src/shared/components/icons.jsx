@@ -127,34 +127,6 @@ export function PencilIcon(props) {
   );
 }
 
-export function LockIcon(props) {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" width="14" height="14" {...props}>
-      <rect x="5.5" y="10.5" width="13" height="9" rx="1.6" stroke="currentColor" strokeWidth="1.5" />
-      <path
-        d="M8 10.5V7.8a4 4 0 0 1 8 0v2.7"
-        stroke="currentColor"
-        strokeWidth="1.5"
-        strokeLinecap="round"
-      />
-    </svg>
-  );
-}
-
-export function LogOutIcon(props) {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" width="14" height="14" {...props}>
-      <path
-        d="M10 4.5H6.5a1 1 0 0 0-1 1v13a1 1 0 0 0 1 1H10M15 8l4 4-4 4M19 12H9.5"
-        stroke="currentColor"
-        strokeWidth="1.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
-}
-
 export function DownloadIcon(props) {
   return (
     <svg viewBox="0 0 24 24" fill="none" width="14" height="14" {...props}>
