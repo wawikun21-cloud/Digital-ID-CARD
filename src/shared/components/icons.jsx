@@ -100,6 +100,47 @@ export function TrashIcon(props) {
   );
 }
 
+export function CloseIcon(props) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" width="14" height="14" {...props}>
+      <path
+        d="M6.5 6.5l11 11m0-11l-11 11"
+        stroke="currentColor"
+        strokeWidth="1.6"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
+export function PencilIcon(props) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" width="14" height="14" {...props}>
+      <path
+        d="M15.2 4.8a1.7 1.7 0 0 1 2.4 0l1.6 1.6a1.7 1.7 0 0 1 0 2.4L9 19H5v-4L15.2 4.8Z"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinejoin="round"
+      />
+      <path d="M14 6l4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+export function UploadIcon(props) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" width="14" height="14" {...props}>
+      <path
+        d="M12 15.5V4.5m0 0L8.2 8.3M12 4.5l3.8 3.8M4.5 15v3a1.5 1.5 0 0 0 1.5 1.5h12a1.5 1.5 0 0 0 1.5-1.5v-3"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
 // Social-platform glyphs, drawn as simple monoline marks so they sit
 // comfortably next to the phone/globe/mail icons above rather than
 // looking like pasted-in brand logos.

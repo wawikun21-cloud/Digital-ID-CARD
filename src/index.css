@@ -11,6 +11,15 @@
     height: 100%;
   }
 
+  /* The closed drawer parks itself off-screen to the right. Without
+     this, that off-screen panel widens the document and the whole page
+     can be scrolled sideways, which drags the layout out from under
+     the fixed drawer. */
+  html,
+  body {
+    overflow-x: hidden;
+  }
+
   body {
     font-family: theme('fontFamily.sans');
     background-color: theme('colors.cream');

@@ -7,6 +7,14 @@
  * call and nothing in the components has to know the difference.
  */
 
+import defaultProfilePhoto from '../../../assets/default-profile.jpg';
+
+/**
+ * Photo used when a Digital ID has no uploaded picture of its own.
+ * Exported so the form can offer "restore default" after an upload.
+ */
+export const DEFAULT_PROFILE_PHOTO = defaultProfilePhoto;
+
 const MOCK_DIGITAL_ID = {
   id: 'CIT-2026-0001',
   name: 'Benneth A. Aloyon, MIT',
@@ -14,7 +22,7 @@ const MOCK_DIGITAL_ID = {
   secondaryRole: 'Founder, BAA Digital Marketing Services',
   department: 'College of Information Technology',
   organization: 'BAA Digital',
-  photo: null,
+  photo: DEFAULT_PROFILE_PHOTO,
   contact: {
     phone: '+63 931 984 9574',
     website: 'www.baadigital.com',
@@ -25,7 +33,10 @@ const MOCK_DIGITAL_ID = {
   ],
   issued: '2026-01-15',
   expires: '2028-01-15',
-  qrData: 'https://example.com/verify/CIT-2026-0001',
+  // No `qrData` on purpose: the card derives the verification URL from
+  // the ID number via buildVerifyUrl(), so an edited ID number and its
+  // QR code can never drift apart. Set `qrData` here only to pin a
+  // one-off value that shouldn't follow the ID.
 };
 
 /**

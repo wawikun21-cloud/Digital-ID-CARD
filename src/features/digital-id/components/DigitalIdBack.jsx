@@ -1,6 +1,11 @@
 import DigitalIdQrCode from './DigitalIdQrCode';
 import { ShieldCheckIcon } from '../../../shared/components/icons';
-import { formatIssueDate, detectSocialPlatform, toHref } from '../utils/digitalIdUtils';
+import {
+  formatIssueDate,
+  detectSocialPlatform,
+  toHref,
+  buildVerifyUrl,
+} from '../utils/digitalIdUtils';
 import { SOCIAL_ICONS } from '../utils/socialIcons';
 
 /**
@@ -11,6 +16,10 @@ import { SOCIAL_ICONS } from '../utils/socialIcons';
 export default function DigitalIdBack({ digitalId, interactive = true }) {
   const { id, organization, qrData, issued, expires, socialLinks = [] } = digitalId;
   const validLinks = socialLinks.filter((link) => link.url.trim() !== '');
+
+  // Derived from the ID number unless the record pins its own value,
+  // so editing the ID number re-points the QR code straight away.
+  const verifyUrl = qrData || buildVerifyUrl(id);
 
   return (
     <div className="id-surface id-surface--dark id-guilloche flex h-full w-full flex-col items-center justify-between bg-ink px-[6%] py-[6%] text-paper">
@@ -25,7 +34,7 @@ export default function DigitalIdBack({ digitalId, interactive = true }) {
       </header>
 
       <div className="flex flex-1 flex-col items-center justify-center gap-[0.6em]">
-        <DigitalIdQrCode data={qrData} size={100} />
+        <DigitalIdQrCode data={verifyUrl} size={100} />
         <p className="text-[0.6em] tracking-[0.02em] text-paper/70">Scan to verify identity</p>
 
         {validLinks.length > 0 && (

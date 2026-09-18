@@ -4,7 +4,7 @@
  */
 export default function TextField({ label, value, onChange, type = 'text', placeholder, id }) {
   return (
-    <label htmlFor={id} className="flex flex-col gap-1">
+    <label htmlFor={id} className="flex min-w-0 flex-col gap-1">
       <span className="text-xs font-medium text-ink-soft">{label}</span>
       <input
         id={id}
@@ -12,7 +12,7 @@ export default function TextField({ label, value, onChange, type = 'text', place
         value={value}
         placeholder={placeholder}
         onChange={(event) => onChange(event.target.value)}
-        className="rounded-lg border border-line bg-paper px-3 py-2 text-sm text-ink outline-none transition focus:border-gold focus:ring-1 focus:ring-gold"
+        className="w-full rounded-lg border border-line bg-paper px-3 py-2 text-sm text-ink outline-none transition focus:border-gold focus:ring-1 focus:ring-gold"
       />
     </label>
   );

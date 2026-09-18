@@ -1,6 +1,7 @@
 import TextField from '../../../shared/components/TextField';
 import { PlusIcon, TrashIcon } from '../../../shared/components/icons';
 import { detectSocialPlatform } from '../utils/digitalIdUtils';
+import ProfilePhotoField from './ProfilePhotoField';
 import { SOCIAL_ICONS } from '../utils/socialIcons';
 
 /**
@@ -8,6 +9,9 @@ import { SOCIAL_ICONS } from '../utils/socialIcons';
  * key on the digitalId object (see digitalIdService), so this
  * component never needs to know how the card itself is laid out —
  * it only edits data.
+ *
+ * Renders bare (no panel chrome of its own) because it lives inside
+ * the editor Drawer, which owns the surface, padding and scrolling.
  */
 export default function DigitalIdForm({
   digitalId,
@@ -19,9 +23,15 @@ export default function DigitalIdForm({
 }) {
   return (
     <form
-      className="flex w-full flex-col gap-6 rounded-2xl border border-line bg-paper p-5 text-left shadow-sm"
+      className="flex w-full flex-col gap-6 text-left"
       onSubmit={(event) => event.preventDefault()}
     >
+      <ProfilePhotoField
+        photo={digitalId.photo}
+        name={digitalId.name}
+        onChange={(value) => onUpdateField('photo', value)}
+      />
+
       <fieldset className="flex flex-col gap-3">
         <legend className="mb-1 text-sm font-semibold text-ink">Identity</legend>
         <TextField

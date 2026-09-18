@@ -39,7 +39,10 @@
 
 @media (prefers-reduced-motion: reduce) {
   .id-tilt-layer,
-  .id-flipper {
+  .id-flipper,
+  [role='dialog'],
+  [role='dialog'] + *,
+  [aria-modal='true'] {
     transition-duration: 1ms;
   }
 }

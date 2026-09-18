@@ -1,11 +1,18 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import DigitalIdCard from '../components/DigitalIdCard';
 import DigitalIdForm from '../components/DigitalIdForm';
+import Drawer from '../../../shared/components/Drawer';
+import { PencilIcon } from '../../../shared/components/icons';
 import { useDigitalIdForm } from '../hooks/useDigitalIdForm';
 import { fetchDigitalId } from '../services/digitalIdService';
 
 export default function DigitalIdPage() {
   const [error, setError] = useState(null);
+  // Collapsed by default: the card is the point of the page, the form
+  // is the thing you reach for.
+  const [editorOpen, setEditorOpen] = useState(false);
+  const closeEditor = useCallback(() => setEditorOpen(false), []);
+
   const {
     digitalId,
     loadDigitalId,
@@ -42,35 +49,53 @@ export default function DigitalIdPage() {
           Your credential, always on hand
         </h1>
         <p className="mt-3 text-sm leading-relaxed text-ink-soft">
-          Tilt it, flip it, scan it. Edit any field below and the card updates live — add a
-          social link on the back and its icon is detected automatically.
+          Tilt it, flip it, scan it. Open the editor to change any field and the card updates
+          live — add a social link on the back and its icon is detected automatically.
         </p>
       </div>
 
-      <div className="mt-10 w-full max-w-4xl">
+      <div className="mt-10 flex w-full max-w-md flex-col items-center">
         {error && <p className="text-center text-sm text-maroon-light">{error}</p>}
         {!error && !digitalId && (
           <div
-            className="mx-auto w-full max-w-[300px] animate-pulse rounded-2xl bg-line/60"
+            className="w-full max-w-[300px] animate-pulse rounded-2xl bg-line/60"
             style={{ aspectRatio: '1 / 1.586' }}
             aria-label="Loading Digital ID"
             role="status"
           />
         )}
         {digitalId && (
-          <div className="grid gap-10 lg:grid-cols-[300px_1fr] lg:items-start">
-            <div className="lg:sticky lg:top-14">
+          <>
+            <div className="w-full max-w-[300px]">
               <DigitalIdCard digitalId={digitalId} />
             </div>
-            <DigitalIdForm
-              digitalId={digitalId}
-              onUpdateField={updateField}
-              onUpdateContactField={updateContactField}
-              onAddSocialLink={addSocialLink}
-              onUpdateSocialLink={updateSocialLink}
-              onRemoveSocialLink={removeSocialLink}
-            />
-          </div>
+
+            <button
+              type="button"
+              onClick={() => setEditorOpen(true)}
+              aria-expanded={editorOpen}
+              className="mt-8 flex items-center gap-2 rounded-full border border-line bg-paper px-5 py-2.5 text-sm font-medium text-ink shadow-sm transition hover:border-gold/60 hover:text-maroon-light focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold"
+            >
+              <PencilIcon />
+              Edit details
+            </button>
+
+            <Drawer
+              open={editorOpen}
+              onClose={closeEditor}
+              title="Edit Digital ID"
+              description="Changes apply to the card as you type."
+            >
+              <DigitalIdForm
+                digitalId={digitalId}
+                onUpdateField={updateField}
+                onUpdateContactField={updateContactField}
+                onAddSocialLink={addSocialLink}
+                onUpdateSocialLink={updateSocialLink}
+                onRemoveSocialLink={removeSocialLink}
+              />
+            </Drawer>
+          </>
         )}
       </div>
     </main>

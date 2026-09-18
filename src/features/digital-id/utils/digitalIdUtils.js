@@ -28,6 +28,25 @@ export function formatIssueDate(isoDate) {
 }
 
 /**
+ * Where a scanned Digital ID resolves to. Kept as a single constant so
+ * moving domains later is a one-line change instead of a hunt through
+ * seed data. No trailing slash — `buildVerifyUrl` adds the path.
+ */
+export const VERIFY_BASE_URL = 'https://digital-id-card-olive.vercel.app';
+
+/**
+ * Build the public verification URL for an ID number. Derived rather
+ * than stored, so editing the ID number in the form keeps the QR code
+ * in sync instead of silently pointing at the old credential.
+ * @param {string} id
+ */
+export function buildVerifyUrl(id = '') {
+  const trimmed = String(id).trim();
+  if (!trimmed) return VERIFY_BASE_URL;
+  return `${VERIFY_BASE_URL}/verify/${encodeURIComponent(trimmed)}`;
+}
+
+/**
  * Clamp a value between a min and max.
  */
 export function clamp(value, min, max) {
