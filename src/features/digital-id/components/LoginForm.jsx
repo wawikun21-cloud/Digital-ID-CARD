@@ -35,13 +35,9 @@ export default function LoginForm({ onLogin }) {
             <LockIcon />
           </span>
           <p className="mt-3 font-mono text-xs font-semibold uppercase tracking-[0.2em] text-gold">
-            Digital ID
+            BAA | Digital ID
           </p>
           <h1 className="mt-1 font-serif text-2xl font-semibold text-ink">Sign in to edit</h1>
-          <p className="mt-2 text-sm leading-relaxed text-ink-soft">
-            Only signed-in staff can change this credential. Scanning the QR code still shows
-            the public view — no sign-in needed for that.
-          </p>
         </div>
 
         <form onSubmit={handleSubmit} className="mt-6 flex flex-col gap-4">
