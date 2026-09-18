@@ -1,0 +1,19 @@
+@import './features/digital-id/styles/digital-id.css';
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+
+  body {
+    font-family: theme('fontFamily.sans');
+    background-color: theme('colors.cream');
+    color: theme('colors.ink');
+  }
+}

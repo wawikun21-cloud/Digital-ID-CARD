@@ -1,0 +1,87 @@
+/* Digital ID card — 3D mechanics + surface treatment.
+   Kept separate from Tailwind utilities: perspective, preserve-3d and
+   backface-visibility read far more clearly as real CSS than as
+   arbitrary-value class soup. */
+
+.id-stage {
+  perspective: 1600px;
+  perspective-origin: 50% 50%;
+}
+
+.id-tilt-layer {
+  transform-style: preserve-3d;
+  transition: transform 400ms cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: transform;
+}
+
+.id-tilt-layer.id-tilt-layer--live {
+  transition: none;
+}
+
+.id-flipper {
+  position: relative;
+  transform-style: preserve-3d;
+  transition: transform 700ms cubic-bezier(0.65, 0.05, 0.36, 1);
+}
+
+.id-face {
+  position: absolute;
+  inset: 0;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  border-radius: inherit;
+  overflow: hidden;
+}
+
+.id-face--back {
+  transform: rotateY(180deg);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .id-tilt-layer,
+  .id-flipper {
+    transition-duration: 1ms;
+  }
+}
+
+/* Card surface: a faint diagonal sheen suggesting laminate/foil,
+   layered under the content via ::before so text stays crisp. */
+.id-surface {
+  position: relative;
+  isolation: isolate;
+}
+
+.id-surface::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(
+    115deg,
+    rgba(255, 255, 255, 0) 30%,
+    rgba(255, 255, 255, 0.16) 45%,
+    rgba(255, 255, 255, 0) 60%
+  );
+  z-index: 5;
+}
+
+.id-surface--dark::before {
+  background: linear-gradient(
+    115deg,
+    rgba(255, 255, 255, 0) 30%,
+    rgba(255, 255, 255, 0.08) 45%,
+    rgba(255, 255, 255, 0) 60%
+  );
+}
+
+/* Fine engraved-line texture for the back plate, echoing security
+   printing on a physical ID without needing an image asset. */
+.id-guilloche {
+  background-image: repeating-linear-gradient(
+    115deg,
+    rgba(176, 141, 87, 0.08) 0px,
+    rgba(176, 141, 87, 0.08) 1px,
+    transparent 1px,
+    transparent 6px
+  );
+}
