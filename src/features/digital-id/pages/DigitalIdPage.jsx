@@ -41,17 +41,25 @@ export default function DigitalIdPage() {
 
   return (
     <main className="flex min-h-svh flex-col items-center bg-cream px-6 py-14">
-      <div className="w-full max-w-md text-center">
-        <p className="font-mono text-xs font-semibold uppercase tracking-[0.2em] text-gold">
-          Digital ID
-        </p>
-        <h1 className="mt-3 font-serif text-3xl font-semibold text-ink">
-          Your credential, always on hand
-        </h1>
-        <p className="mt-3 text-sm leading-relaxed text-ink-soft">
-          Tilt it, flip it, scan it. Open the editor to change any field and the card updates
-          live — add a social link on the back and its icon is detected automatically.
-        </p>
+      <div className="w-full max-w-md">
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <p className="font-mono text-xs font-semibold uppercase tracking-[0.2em] text-gold">
+              Digital ID
+            </p>
+          </div>
+          {digitalId && !error && (
+            <button
+              type="button"
+              onClick={() => setEditorOpen(true)}
+              aria-expanded={editorOpen}
+              className="mt-3 flex shrink-0 items-center gap-2 rounded-full border border-line bg-paper px-5 py-2.5 text-sm font-medium text-ink shadow-sm transition hover:border-gold/60 hover:text-maroon-light focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold"
+            >
+              <PencilIcon />
+              Edit details
+            </button>
+          )}
+        </div>
       </div>
 
       <div className="mt-10 flex w-full max-w-md flex-col items-center">
@@ -69,16 +77,6 @@ export default function DigitalIdPage() {
             <div className="w-full max-w-[300px]">
               <DigitalIdCard digitalId={digitalId} />
             </div>
-
-            <button
-              type="button"
-              onClick={() => setEditorOpen(true)}
-              aria-expanded={editorOpen}
-              className="mt-8 flex items-center gap-2 rounded-full border border-line bg-paper px-5 py-2.5 text-sm font-medium text-ink shadow-sm transition hover:border-gold/60 hover:text-maroon-light focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold"
-            >
-              <PencilIcon />
-              Edit details
-            </button>
 
             <Drawer
               open={editorOpen}
