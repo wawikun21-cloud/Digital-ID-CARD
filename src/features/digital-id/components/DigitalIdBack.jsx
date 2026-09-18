@@ -1,39 +1,31 @@
-import { useRef, useState } from 'react';
 import DigitalIdQrCode from './DigitalIdQrCode';
-import { ShieldCheckIcon, DownloadIcon } from '../../../shared/components/icons';
+import { ShieldCheckIcon } from '../../../shared/components/icons';
 import {
   formatIssueDate,
   detectSocialPlatform,
   toHref,
   buildVerifyUrl,
 } from '../utils/digitalIdUtils';
-import { downloadQrCodePng } from '../utils/qrDownload';
 import { SOCIAL_ICONS } from '../utils/socialIcons';
 
 /**
  * Back face: verification plus, optionally, a row of social links.
  * The QR stays the primary job; social icons are a secondary strip
  * beneath it, each one a real link so it can be tapped/scanned.
+ *
+ * `qrRef` is threaded through from DigitalIdCard rather than owned
+ * here: the "Download QR" action now lives outside the card (see
+ * DigitalIdCard), and both faces are always mounted in the DOM — just
+ * rotated out of view via CSS — so that action can read the live
+ * <svg> node without needing the card flipped to the back first.
  */
-export default function DigitalIdBack({ digitalId, interactive = true }) {
+export default function DigitalIdBack({ digitalId, interactive = true, qrRef }) {
   const { id, organization, qrData, issued, expires, socialLinks = [] } = digitalId;
   const validLinks = socialLinks.filter((link) => link.url.trim() !== '');
-  const qrRef = useRef(null);
-  const [downloadError, setDownloadError] = useState(null);
 
   // Derived from the ID number unless the record pins its own value,
   // so editing the ID number re-points the QR code straight away.
   const verifyUrl = qrData || buildVerifyUrl(id);
-
-  async function handleDownload() {
-    setDownloadError(null);
-    try {
-      const safeId = (id || 'digital-id').replace(/[^a-z0-9-]+/gi, '-');
-      await downloadQrCodePng(qrRef.current, `${safeId}-qr.png`);
-    } catch (error) {
-      setDownloadError(error.message);
-    }
-  }
 
   return (
     <div className="id-surface id-surface--dark id-guilloche flex h-full w-full flex-col items-center justify-between bg-ink px-[6%] py-[6%] text-paper">
@@ -50,25 +42,6 @@ export default function DigitalIdBack({ digitalId, interactive = true }) {
       <div className="flex flex-1 flex-col items-center justify-center gap-[0.6em]">
         <DigitalIdQrCode ref={qrRef} data={verifyUrl} size={100} />
         <p className="text-[0.6em] tracking-[0.02em] text-paper/70">Scan to verify identity</p>
-
-        <button
-          type="button"
-          onClick={(event) => {
-            event.stopPropagation(); // don't also flip the card
-            handleDownload();
-          }}
-          tabIndex={interactive ? 0 : -1}
-          className="flex items-center gap-[0.4em] rounded-full border border-gold/40 bg-paper/10 px-[0.8em] py-[0.35em] text-[0.56em] font-medium text-paper transition hover:border-gold hover:bg-paper/20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold"
-        >
-          <DownloadIcon />
-          Download QR
-        </button>
-
-        {downloadError && (
-          <p role="alert" className="max-w-[85%] text-center text-[0.54em] text-gold">
-            {downloadError}
-          </p>
-        )}
 
         {validLinks.length > 0 && (
           <ul className="mt-[0.3em] flex flex-wrap items-center justify-center gap-[0.5em]">

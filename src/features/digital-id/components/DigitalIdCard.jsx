@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import DigitalIdFront from './DigitalIdFront';
 import DigitalIdBack from './DigitalIdBack';
 import DigitalIdControls from './DigitalIdControls';
 import { useCardTilt } from '../hooks/useCardTilt';
 import { useCardFlip } from '../hooks/useCardFlip';
+import { downloadQrCodePng } from '../utils/qrDownload';
 
 /**
  * The interactive 3D card. Tilt and flip live on separate nested
@@ -23,22 +24,34 @@ import { useCardFlip } from '../hooks/useCardFlip';
  * fully keyboard-accessible way to flip. Each face is aria-hidden and
  * un-tabbable while it's the one rotated out of view, so assistive
  * tech and Tab order only ever see the side currently on screen.
+ *
+ * "Download QR" lives outside the card, above it, rather than on the
+ * back face — both faces are always mounted (just rotated away via
+ * CSS), so the QR's <svg> node exists whichever side is showing, and
+ * the download no longer needs the card flipped first.
  */
 export default function DigitalIdCard({ digitalId }) {
-  const { stageRef, tilt, onPointerMove, onPointerLeave, onTouchMove, onTouchEnd, reset } =
+  const { stageRef, tilt, onPointerMove, onPointerLeave, onTouchMove, onTouchEnd } =
     useCardTilt();
   const { flipped, toggleFlip } = useCardFlip();
   const [isLive, setIsLive] = useState(false);
-
-  const handleReset = () => {
-    reset();
-    setIsLive(false);
-  };
+  const qrRef = useRef(null);
+  const [downloadError, setDownloadError] = useState(null);
 
   const handleCardClick = (event) => {
     if (event.target.closest('a')) return; // let the social link navigate instead of flipping
     toggleFlip();
   };
+
+  async function handleDownloadQr() {
+    setDownloadError(null);
+    try {
+      const safeId = (digitalId.id || 'digital-id').replace(/[^a-z0-9-]+/gi, '-');
+      await downloadQrCodePng(qrRef.current, `${safeId}-qr.png`);
+    } catch (error) {
+      setDownloadError(error.message);
+    }
+  }
 
   return (
     <div className="flex flex-col items-center gap-6">
@@ -67,13 +80,13 @@ export default function DigitalIdCard({ digitalId }) {
               <DigitalIdFront digitalId={digitalId} />
             </div>
             <div className="id-face id-face--back rounded-2xl border border-ink/40" aria-hidden={!flipped}>
-              <DigitalIdBack digitalId={digitalId} interactive={flipped} />
+              <DigitalIdBack digitalId={digitalId} interactive={flipped} qrRef={qrRef} />
             </div>
           </div>
         </div>
       </div>
 
-      <DigitalIdControls flipped={flipped} onFlip={toggleFlip} onReset={handleReset} />
+      <DigitalIdControls onDownloadQr={handleDownloadQr} downloadError={downloadError} />
     </div>
   );
 }
