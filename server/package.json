@@ -1,0 +1,14 @@
+{
+  "name": "digital-id-card-server",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "node --watch index.js",
+    "migrate": "node migrations/001-create-digital-id.js",
+    "migrate:dev": "node migrations/001-create-digital-id-mysql.js"
+  },
+  "dependencies": {
+    "dotenv": "^18.0.3"
+  }
+}

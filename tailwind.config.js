@@ -1,6 +1,8 @@
 /** @type {import('tailwindcss').Config} */
+import path from 'path';
+
 export default {
-  content: ['./index.html', './src/**/*.{js,jsx}'],
+  content: [path.join(__dirname, 'client/index.html'), path.join(__dirname, 'client/src/**/*.{js,jsx}')],
   theme: {
     extend: {
       colors: {
