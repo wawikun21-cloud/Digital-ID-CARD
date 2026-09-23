@@ -9,6 +9,7 @@
     "migrate:dev": "node migrations/001-create-digital-id-mysql.js"
   },
   "dependencies": {
-    "dotenv": "^18.0.3"
+    "dotenv": "^18.0.3",
+    "cookie-parser": "^1.4.6"
   }
 }

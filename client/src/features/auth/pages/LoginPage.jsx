@@ -19,8 +19,7 @@ export default function LoginPage() {
     setError(null);
     setLoading(true);
     try {
-      const user = await login(identifier, password);
-      authLogin(user);
+      await authLogin(identifier, password);
       navigate(from, { replace: true });
     } catch (err) {
       setError(err.message);
