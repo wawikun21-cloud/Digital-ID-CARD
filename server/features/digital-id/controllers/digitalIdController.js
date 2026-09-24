@@ -1,10 +1,11 @@
-import { getDigitalId, saveDigitalIdForUser, deleteDigitalId } from '../services/digitalIdService.js';
+import { getDigitalId, saveDigitalIdForUser, deleteDigitalIdByUserId } from '../services/digitalIdService.js';
 
 function normalizeBody(body) {
   const isFormData = !body || typeof body !== 'object' || body instanceof String;
   if (!isFormData && typeof body.name === 'string') {
     return {
       id_number: body.id_number ?? body.idNumber,
+      address: body.address,
       name: body.name,
       position: body.position,
       secondary_role: body.secondary_role ?? body.secondaryRole,
@@ -28,6 +29,7 @@ function normalizeBody(body) {
 
   return {
     id_number: body.id_number,
+    address: body.address,
     name: body.name,
     position: body.position,
     secondary_role: body.secondary_role,
@@ -91,10 +93,10 @@ export async function putDigitalIdHandler(req, res) {
 
 export async function deleteDigitalIdHandler(req, res) {
   try {
-    await deleteDigitalId(req.user.id);
+    await deleteDigitalIdByUserId(req.user.id);
     res.status(204).send();
   } catch (err) {
     console.error('DELETE /api/digital-id error', err);
     res.status(500).json({ error: 'Failed to reset digital ID.' });
   }
-}
+} 

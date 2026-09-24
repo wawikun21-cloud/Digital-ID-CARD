@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { createLocalId } from '../utils/digitalIdUtils';
 import {
   saveDigitalId,
@@ -8,74 +8,125 @@ import {
 
 /**
  * Owns the editable copy of the Digital ID. Starts from whatever data
- * was fetched (mock today, an API later) and lets the person change
- * any field, including adding/removing social links, without ever
- * mutating the original object in place.
+ * was fetched and lets the person change any field, including adding
+ * and removing social links, without mutating the original object.
  *
- * Every change is persisted as it happens — there's no separate Save
- * action, matching the rest of the form's "changes apply as you type"
- * behaviour — so a refresh picks up where editing left off instead of
- * reverting to the seed data.
+ * Edits apply to the card live but are only sent to the server when
+ * `save()` is called (the form's Save button). `dirty` tells the form
+ * whether there is anything to save; `saveStatus` reports the result.
  */
 export function useDigitalIdForm(initialDigitalId = null) {
   const [digitalId, setDigitalId] = useState(initialDigitalId);
-  // Distinguishes "just loaded, nothing to save yet" from "the person
-  // changed something" so loading a record doesn't immediately
-  // re-save it as if it were an edit.
-  const hasLoadedRef = useRef(false);
-  // Images (photo/logo) that changed since the last save. Only these are
-  // re-uploaded; text edits save without resending the files.
+  const [dirty, setDirty] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [saveStatus, setSaveStatus] = useState(null); // { type: 'success' | 'error', message }
+
+  const latestRef = useRef(initialDigitalId);
+  // Images (photo/logo) changed since the last successful save. Only
+  // these are uploaded; a text-only save doesn't resend the files.
   const pendingUploadsRef = useRef({ photo: false, logo: false });
 
+  const apply = useCallback((updater) => {
+    setDigitalId((prev) => {
+      const next = updater(prev);
+      latestRef.current = next;
+      return next;
+    });
+    setDirty(true);
+    setSaveStatus(null);
+  }, []);
+
   const loadDigitalId = useCallback((data) => {
-    hasLoadedRef.current = true;
-    setDigitalId(data);
-  }, []);
-
-  useEffect(() => {
-    if (!hasLoadedRef.current || !digitalId) return;
-    const uploads = pendingUploadsRef.current;
+    latestRef.current = data;
     pendingUploadsRef.current = { photo: false, logo: false };
-    saveDigitalId(digitalId, uploads).catch((error) => console.error(error));
-  }, [digitalId]);
-
-  const updateField = useCallback((field, value) => {
-    if (field === 'photo' || field === 'logo') pendingUploadsRef.current[field] = true;
-    setDigitalId((prev) => ({ ...prev, [field]: value }));
+    setDigitalId(data);
+    setDirty(false);
   }, []);
 
-  const updateContactField = useCallback((field, value) => {
-    setDigitalId((prev) => ({ ...prev, contact: { ...prev.contact, [field]: value } }));
+  const save = useCallback(async () => {
+    const snapshot = latestRef.current;
+    if (!snapshot) return;
+    const uploads = { ...pendingUploadsRef.current };
+
+    setSaving(true);
+    setSaveStatus(null);
+    try {
+      await saveDigitalId(snapshot, uploads);
+      // Keep flags for any image picked while this request was in flight.
+      if (latestRef.current.photo === snapshot.photo) pendingUploadsRef.current.photo = false;
+      if (latestRef.current.logo === snapshot.logo) pendingUploadsRef.current.logo = false;
+      setDirty(latestRef.current !== snapshot);
+      setSaveStatus({ type: 'success', message: 'Saved.' });
+    } catch (error) {
+      setSaveStatus({ type: 'error', message: error.message || 'Could not save.' });
+    } finally {
+      setSaving(false);
+    }
   }, []);
+
+  const updateField = useCallback(
+    (field, value) => {
+      if (field === 'photo' || field === 'logo') pendingUploadsRef.current[field] = true;
+      apply((prev) => ({ ...prev, [field]: value }));
+    },
+    [apply],
+  );
+
+  const updateContactField = useCallback(
+    (field, value) => {
+      apply((prev) => ({ ...prev, contact: { ...prev.contact, [field]: value } }));
+    },
+    [apply],
+  );
 
   const addSocialLink = useCallback(() => {
-    setDigitalId((prev) => ({
+    apply((prev) => ({
       ...prev,
       socialLinks: [...prev.socialLinks, { id: createLocalId('social'), url: '' }],
     }));
-  }, []);
+  }, [apply]);
 
-  const updateSocialLink = useCallback((id, url) => {
-    setDigitalId((prev) => ({
-      ...prev,
-      socialLinks: prev.socialLinks.map((link) => (link.id === id ? { ...link, url } : link)),
-    }));
-  }, []);
+  const updateSocialLink = useCallback(
+    (id, url) => {
+      apply((prev) => ({
+        ...prev,
+        socialLinks: prev.socialLinks.map((link) => (link.id === id ? { ...link, url } : link)),
+      }));
+    },
+    [apply],
+  );
 
-  const removeSocialLink = useCallback((id) => {
-    setDigitalId((prev) => ({
-      ...prev,
-      socialLinks: prev.socialLinks.filter((link) => link.id !== id),
-    }));
-  }, []);
+  const removeSocialLink = useCallback(
+    (id) => {
+      apply((prev) => ({
+        ...prev,
+        socialLinks: prev.socialLinks.filter((link) => link.id !== id),
+      }));
+    },
+    [apply],
+  );
 
-  const resetToDefault = useCallback(() => {
-    clearStoredDigitalId();
-    setDigitalId(getDefaultDigitalId());
+  const resetToDefault = useCallback(async () => {
+    try {
+      await clearStoredDigitalId();
+    } catch (error) {
+      setSaveStatus({ type: 'error', message: error.message });
+      return;
+    }
+    pendingUploadsRef.current = { photo: false, logo: false };
+    const defaults = getDefaultDigitalId();
+    latestRef.current = defaults;
+    setDigitalId(defaults);
+    setDirty(true);
+    setSaveStatus(null);
   }, []);
 
   return {
     digitalId,
+    dirty,
+    saving,
+    saveStatus,
+    save,
     loadDigitalId,
     updateField,
     updateContactField,

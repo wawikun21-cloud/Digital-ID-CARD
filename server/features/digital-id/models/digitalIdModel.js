@@ -1,3 +1,4 @@
+import { randomUUID } from 'crypto';
 import { query, driver as dbDriver } from '../../../config/database.js';
 
 const TABLE = 'digital_ids';
@@ -51,6 +52,7 @@ function rowToRecord(row) {
     organization: row.organization,
     bio: row.bio,
     idNumber: row.id_number ?? '',
+    address: row.address ?? '',
     photo: bufferToDataUrl(row.photo),
     background: row.background || null,
     logo: bufferToDataUrl(row.logo),
@@ -199,95 +201,81 @@ export async function findOneById(id) {
   return rowToRecord(res.rows[0]);
 }
 
-export async function upsertForUser(userId, data, photoBuffer = null, backgroundBuffer = null, logoBuffer = null) {
-  const id = driver === 'mysql' ? require('crypto').randomUUID() : undefined;
-  const values = [
-    id ?? userId,
-    userId,
-    data.name ?? '',
-    data.position ?? '',
-    data.secondary_role ?? '',
-    data.department ?? '',
-    data.organization ?? '',
-    data.bio ?? '',
-    photoBuffer,
-    backgroundBuffer,
-    logoBuffer,
-    data.contact_phone ?? '',
-    data.contact_website ?? '',
-    data.contact_email ?? '',
-    data.issued ?? SEED.issued,
-    data.expires ?? SEED.expires,
-    data.social_links ?? SEED.social_links,
-    data.id_number ?? '',
-  ];
+function today() {
+  return new Date().toISOString().slice(0, 10);
+}
 
-  let sql;
-  if (driver === 'mysql') {
-    sql = `
-      INSERT INTO ${TABLE} (
-        id, user_id, name, position, secondary_role, department, organization,
-        bio, photo, background, logo, contact_phone, contact_website, contact_email,
-        issued, expires, social_links, id_number, created_at, updated_at
-      )
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(6), NOW(6))
-      ON DUPLICATE KEY UPDATE
-        name = VALUES(name),
-        position = VALUES(position),
-        secondary_role = VALUES(secondary_role),
-        department = VALUES(department),
-        organization = VALUES(organization),
-        bio = VALUES(bio),
-        photo = COALESCE(VALUES(photo), photo),
-        background = COALESCE(VALUES(background), background),
-        logo = COALESCE(VALUES(logo), logo),
-        contact_phone = VALUES(contact_phone),
-        contact_website = VALUES(contact_website),
-        contact_email = VALUES(contact_email),
-        issued = VALUES(issued),
-        expires = VALUES(expires),
-        social_links = VALUES(social_links),
-        id_number = VALUES(id_number),
-        updated_at = NOW(6)
-    `;
+/**
+ * Create or update the Digital ID that belongs to `userId`.
+ *
+ * Written as look-up-then-UPDATE/INSERT instead of ON CONFLICT /
+ * ON DUPLICATE KEY so it does not depend on a unique index over
+ * user_id (the migrations do not create one) and behaves the same on
+ * PostgreSQL and MySQL. Notes:
+ *  - social_links is always sent as a JSON string (a raw JS array is
+ *    turned into a Postgres array literal by `pg`, which JSONB rejects).
+ *  - empty dates are never sent ('' is not a valid DATE): UPDATE keeps
+ *    the stored value, INSERT falls back to today.
+ *  - photo/logo are only written when a new file was uploaded.
+ */
+export async function upsertForUser(userId, data, photoBuffer = null, _backgroundBuffer = null, logoBuffer = null) {
+  const text = {
+    id_number: data.id_number ?? '',
+    name: data.name ?? '',
+    position: data.position ?? '',
+    secondary_role: data.secondary_role ?? '',
+    department: data.department ?? '',
+    organization: data.organization ?? '',
+    bio: data.bio ?? '',
+    address: data.address ?? '',
+    contact_phone: data.contact_phone ?? '',
+    contact_website: data.contact_website ?? '',
+    contact_email: data.contact_email ?? '',
+    social_links: JSON.stringify(data.social_links ?? SEED.social_links),
+  };
+  const issued = data.issued || null;
+  const expires = data.expires || null;
+  const now = driver === 'mysql' ? 'NOW(6)' : 'NOW()';
+
+  const existing = await query(`SELECT id FROM ${TABLE} WHERE user_id = ${placeholder(1)} LIMIT 1`, [userId]);
+
+  const values = [];
+  const bind = (value) => {
+    values.push(value);
+    return placeholder(values.length);
+  };
+
+  if (existing.rowCount > 0) {
+    const sets = Object.entries(text).map(([column, value]) => `${column} = ${bind(value)}`);
+    for (const [column, value] of [
+      ['issued', issued],
+      ['expires', expires],
+      ['photo', photoBuffer],
+      ['logo', logoBuffer],
+    ]) {
+      sets.push(`${column} = COALESCE(${bind(value)}, ${column})`);
+    }
+    const where = bind(userId);
+    await query(`UPDATE ${TABLE} SET ${sets.join(', ')}, updated_at = ${now} WHERE user_id = ${where}`, values);
   } else {
-    sql = `
-      INSERT INTO ${TABLE} (
-        id, user_id, name, position, secondary_role, department, organization,
-        bio, photo, background, logo, contact_phone, contact_website, contact_email,
-        issued, expires, social_links, id_number, created_at, updated_at
-      )
-      VALUES (
-        ${placeholder(1)}, ${placeholder(2)}, ${placeholder(3)}, ${placeholder(4)}, ${placeholder(5)}, ${placeholder(6)},
-        ${placeholder(7)}, ${placeholder(8)}, ${placeholder(9)}, ${placeholder(10)}, ${placeholder(11)}, ${placeholder(12)}, ${placeholder(13)}, ${placeholder(14)},
-        ${placeholder(15)}, ${placeholder(16)}, ${placeholder(17)}, ${placeholder(18)},
-        COALESCE((SELECT created_at FROM ${TABLE} WHERE user_id = ${placeholder(2)}), NOW()),
-        NOW()
-      )
-      ON CONFLICT (user_id) DO UPDATE SET
-        name = EXCLUDED.name,
-        position = EXCLUDED.position,
-        secondary_role = EXCLUDED.secondary_role,
-        department = EXCLUDED.department,
-        organization = EXCLUDED.organization,
-        bio = EXCLUDED.bio,
-        photo = COALESCE(EXCLUDED.photo, ${TABLE}.photo),
-        background = COALESCE(EXCLUDED.background, ${TABLE}.background),
-        logo = COALESCE(EXCLUDED.logo, ${TABLE}.logo),
-        contact_phone = EXCLUDED.contact_phone,
-        contact_website = EXCLUDED.contact_website,
-        contact_email = EXCLUDED.contact_email,
-        issued = EXCLUDED.issued,
-        expires = EXCLUDED.expires,
-        social_links = EXCLUDED.social_links,
-        id_number = EXCLUDED.id_number,
-        updated_at = NOW()
-      RETURNING *
-    `;
+    const columns = {
+      id: driver === 'mysql' ? randomUUID() : String(userId),
+      user_id: userId,
+      ...text,
+      issued: issued ?? today(),
+      expires: expires ?? today(),
+      photo: photoBuffer,
+      logo: logoBuffer,
+    };
+    const names = Object.keys(columns);
+    const marks = names.map((name) => bind(columns[name]));
+    await query(
+      `INSERT INTO ${TABLE} (${names.join(', ')}, created_at, updated_at) VALUES (${marks.join(', ')}, ${now}, ${now})`,
+      values,
+    );
   }
 
-  const res = await query(sql, values);
-  return rowToRecord(res.rows[0]);
+  return findOneByUserId(userId);
 }
 
 export async function resetToSeedForUser(userId) {

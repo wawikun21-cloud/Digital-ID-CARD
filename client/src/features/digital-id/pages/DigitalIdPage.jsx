@@ -15,6 +15,10 @@ export default function DigitalIdPage() {
 
   const {
     digitalId,
+    dirty,
+    saving,
+    saveStatus,
+    save,
     loadDigitalId,
     updateField,
     updateContactField,
@@ -42,20 +46,9 @@ export default function DigitalIdPage() {
 
   return (
     <main className="flex min-h-svh flex-col items-center bg-cream px-6 py-14">
-      <div className="w-full max-w-md text-center">
-        <p className="font-mono text-xs font-semibold uppercase tracking-[0.2em] text-gold">
-          Digital ID
-        </p>
-        <h1 className="mt-3 font-serif text-3xl font-semibold text-ink">
-          Your credential, always on hand
-        </h1>
-        <p className="mt-3 text-sm leading-relaxed text-ink-soft">
-          Tilt it, flip it, scan it. Open the editor to change any field and the card updates
-          live — add a social link on the back and its icon is detected automatically.
-        </p>
-      </div>
+      
 
-      <div className="mt-10 flex w-full max-w-md flex-col items-center">
+      <div className=" flex w-full max-w-md flex-col items-center">
         {error && <p className="text-center text-sm text-maroon-light">{error}</p>}
         {!error && !digitalId && (
           <div
@@ -85,7 +78,7 @@ export default function DigitalIdPage() {
               open={editorOpen}
               onClose={closeEditor}
               title="Edit Digital ID"
-              description="Changes apply to the card as you type."
+              description="The card previews your changes. Press Save to keep them."
             >
               <DigitalIdForm
                 digitalId={digitalId}
@@ -95,6 +88,10 @@ export default function DigitalIdPage() {
                 onUpdateSocialLink={updateSocialLink}
                 onRemoveSocialLink={removeSocialLink}
                 onResetToDefault={resetToDefault}
+                onSave={save}
+                saving={saving}
+                dirty={dirty}
+                saveStatus={saveStatus}
                 isAdmin={user?.role === 'admin'}
               />
             </Drawer>

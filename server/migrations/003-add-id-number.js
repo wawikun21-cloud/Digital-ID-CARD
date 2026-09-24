@@ -1,8 +1,10 @@
 import { query } from '../config/database.js';
 
-// PostgreSQL. Adds the human-facing ID number printed on the card
-// ("ID NO: 000001"); `id` stays the record key.
-const SQL = `ALTER TABLE digital_ids ADD COLUMN IF NOT EXISTS id_number TEXT NOT NULL DEFAULT '';`;
+// PostgreSQL. Adds the ID number printed on the card and the address shown on the back; `id` stays the record key.
+const SQL = `
+ALTER TABLE digital_ids ADD COLUMN IF NOT EXISTS id_number TEXT NOT NULL DEFAULT '';
+ALTER TABLE digital_ids ADD COLUMN IF NOT EXISTS address TEXT NOT NULL DEFAULT '';
+`;
 
 async function run() {
   if (process.env.RUN_MIGRATIONS === 'false') {

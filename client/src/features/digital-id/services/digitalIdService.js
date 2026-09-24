@@ -18,6 +18,7 @@
 const MOCK_DIGITAL_ID = {
   id: 'CIT-2026-0001',
   idNumber: '000001',
+  address: '',
   name: 'Benneth A. Aloyon, MIT',
   position: 'Dean, College of Information Technology',
   secondaryRole: 'Founder, BAA Digital Marketing Services',
@@ -51,6 +52,7 @@ function dataUrlToBlob(dataUrl) {
 
 function appendFields(target, digitalId) {
   target.set('id_number', digitalId.idNumber ?? '');
+  target.set('address', digitalId.address ?? '');
   target.set('name', digitalId.name);
   target.set('position', digitalId.position);
   target.set('secondary_role', digitalId.secondaryRole);

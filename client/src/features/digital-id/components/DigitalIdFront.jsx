@@ -18,7 +18,7 @@ import { nameFontSize, splitCompanyName, splitFullName } from '../utils/cardText
  * Everything is sized in `cqw` (1% of the card width, via the container
  * query on the root), so the card scales as one piece at any width.
  */
-export default function DigitalIdFront({ digitalId, interactive = true }) {
+export default function DigitalIdFront({ digitalId, interactive = true, qrRef }) {
   const { id, idNumber, name, position, organization, photo, logo, qrData, contact } = digitalId;
   const company = splitCompanyName(organization);
   const nameLines = splitFullName(name);
@@ -104,6 +104,7 @@ export default function DigitalIdFront({ digitalId, interactive = true }) {
         <span className="absolute bottom-0 right-0 h-[3.8cqw] w-[3.8cqw] border-b-[0.9cqw] border-r-[0.9cqw] border-white" />
         <div className="absolute inset-[2.2cqw] rounded-[0.8cqw] bg-white p-[1.2cqw]">
           <QRCodeSVG
+            ref={qrRef}
             value={qrValue}
             size={256}
             level="M"

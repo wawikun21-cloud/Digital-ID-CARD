@@ -7,12 +7,19 @@ async function run() {
     return;
   }
   try {
-    const res = await query(
-      `SELECT COUNT(*) AS cnt FROM information_schema.columns
-       WHERE table_schema = DATABASE() AND table_name = 'digital_ids' AND column_name = 'id_number'`,
-    );
-    if (res.rows[0].cnt === 0) {
-      await query(`ALTER TABLE digital_ids ADD COLUMN id_number VARCHAR(50) NOT NULL DEFAULT ''`);
+    const columns = [
+      ['id_number', "VARCHAR(50) NOT NULL DEFAULT ''"],
+      ['address', "TEXT NULL"],
+    ];
+    for (const [name, definition] of columns) {
+      const res = await query(
+        `SELECT COUNT(*) AS cnt FROM information_schema.columns
+         WHERE table_schema = DATABASE() AND table_name = 'digital_ids' AND column_name = ?`,
+        [name],
+      );
+      if (res.rows[0].cnt === 0) {
+        await query(`ALTER TABLE digital_ids ADD COLUMN ${name} ${definition}`);
+      }
     }
     console.log('Migration 003-add-id-number-mysql executed successfully');
   } catch (err) {
