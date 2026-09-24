@@ -1,73 +1,119 @@
-import { getInitials } from '../utils/digitalIdUtils';
-import IconBadge from '../../../shared/components/IconBadge';
-import { PhoneIcon, GlobeIcon, MailIcon } from '../../../shared/components/icons';
+import { QRCodeSVG } from 'qrcode.react';
+import backgroundImage from '../../../assets/id-card/background.png';
+import overlayImage from '../../../assets/id-card/overlay.png';
+import defaultLogo from '../../../assets/id-card/logo-mark.png';
+import { buildVerifyUrl, toHref } from '../utils/digitalIdUtils';
+import { nameFontSize, splitCompanyName, splitFullName } from '../utils/cardText';
 
 /**
- * Front face: identity at a glance — who this is, their role, and
- * how to reach them. Laid out as a centered vertical stack to suit
- * the card's portrait proportions. Kept free of QR/flip logic.
+ * Front face, built from the design layout (638 x 1013). Layers, bottom
+ * to top:
+ *
+ *   1. background.png   full-bleed artwork
+ *   2. profile photo    transparent PNG, anchored bottom-right
+ *   3. overlay.png      maroon wave; it sits ABOVE the photo so the
+ *                       photo's lower edge disappears behind the curve
+ *   4. text, logo, QR
+ *
+ * Everything is sized in `cqw` (1% of the card width, via the container
+ * query on the root), so the card scales as one piece at any width.
  */
-export default function DigitalIdFront({ digitalId }) {
-  const { name, position, secondaryRole, department, organization, id, bio, photo, contact } =
-    digitalId;
+export default function DigitalIdFront({ digitalId, interactive = true }) {
+  const { id, idNumber, name, position, organization, photo, logo, qrData, contact } = digitalId;
+  const company = splitCompanyName(organization);
+  const nameLines = splitFullName(name);
+  const link = contact?.website?.trim();
+  const qrValue = qrData || buildVerifyUrl(id);
 
   return (
-    <div className="id-surface flex h-full w-full flex-col bg-paper px-[9%] py-[6%] text-ink">
-      <header className="flex items-center justify-between gap-2">
-        <span className="truncate font-mono text-[0.6em] font-semibold uppercase tracking-[0.16em] text-gold">
-          {organization}
-        </span>
-        <span className="shrink-0 font-mono text-[0.56em] tracking-[0.06em] text-ink-soft">{id}</span>
-      </header>
+    <div className="id-surface relative h-full w-full overflow-hidden bg-[#220210] font-card text-white [container-type:inline-size]">
+      <img src={backgroundImage} alt="" className="absolute inset-0 h-full w-full object-cover" />
 
-      <div className="flex flex-1 flex-col items-center justify-center text-center">
+      <div className="absolute bottom-[24%] left-[18%] right-0 top-[5%]">
         {photo ? (
           <img
             src={photo}
-            alt=""
-            className="h-[4.6em] w-[4.6em] rounded-full object-cover ring-2 ring-gold/60"
+            alt={name ? `Photo of ${name}` : ''}
+            className="h-full w-full object-contain object-[right_bottom]"
           />
         ) : (
-          <div className="flex h-[4.6em] w-[4.6em] items-center justify-center rounded-full bg-gradient-to-br from-ink to-maroon-light text-[1.35em] font-serif font-semibold text-paper ring-2 ring-gold/60">
-            {getInitials(name)}
-          </div>
-        )}
-
-        <h1 className="mt-[0.7em] font-serif text-[1.18em] font-semibold leading-tight text-ink">
-          {name}
-        </h1>
-        <p className="mt-[0.3em] text-[0.72em] font-medium text-ink-soft">{position}</p>
-        {secondaryRole && (
-          <p className="mt-[0.1em] text-[0.64em] text-ink-soft/80">{secondaryRole}</p>
-        )}
-
-        <span className="mt-[0.8em] rounded-full border border-gold/50 px-[0.7em] py-[0.22em] text-[0.56em] font-medium uppercase tracking-[0.09em] text-gold">
-          {department}
-        </span>
-
-        {bio && (
-          <p className="mt-[0.9em] line-clamp-2 max-w-[92%] text-[0.62em] italic leading-snug text-ink-soft/90">
-            “{bio}”
-          </p>
+          <svg
+            viewBox="0 0 100 120"
+            className="h-full w-full text-white/25"
+            preserveAspectRatio="xMaxYMax meet"
+            aria-hidden="true"
+          >
+            <circle cx="50" cy="34" r="20" fill="currentColor" />
+            <path d="M8 120c0-30 18-46 42-46s42 16 42 46z" fill="currentColor" />
+          </svg>
         )}
       </div>
 
-      <div className="h-px w-full bg-line" />
+      <img src={overlayImage} alt="" className="absolute inset-0 h-full w-full object-cover" />
 
-      <ul className="mt-[6%] flex flex-col gap-[0.4em]">
-        <li className="flex min-w-0 items-center gap-[0.5em] text-[0.6em] text-ink-soft">
-          <IconBadge icon={<PhoneIcon />} />
-          <span className="truncate">{contact.phone}</span>
-        </li>
-        <li className="flex min-w-0 items-center gap-[0.5em] text-[0.6em] text-ink-soft">
-          <IconBadge icon={<GlobeIcon />} />
-          <span className="truncate">{contact.website}</span>
-        </li>
-        <li className="flex min-w-0 items-center gap-[0.5em] text-[0.6em] text-ink-soft">
-          <IconBadge icon={<MailIcon />} />
-          <span className="truncate">{contact.email}</span>
-        </li>
-      </ul>
+      <header className="absolute left-[5.9%] top-[4.4%] w-[60%]">
+        <img
+          src={logo || defaultLogo}
+          alt="Company logo"
+          className="h-[7cqw] max-w-[20cqw] object-contain object-left"
+        />
+        <p className="mt-[3.2cqw] text-[3.5cqw] font-semibold uppercase leading-[1.1]">
+          {company.primary}
+        </p>
+        {company.secondary && (
+          <p className="text-[2.7cqw] font-medium uppercase leading-[1.2]">{company.secondary}</p>
+        )}
+        {idNumber && (
+          <p className="mt-[2.4cqw] text-[3.1cqw] font-light tracking-[0.02em]">
+            ID NO: {idNumber}
+          </p>
+        )}
+      </header>
+
+      <div className="absolute inset-x-[8.9%] bottom-[3.4%] flex flex-col">
+        <p className="line-clamp-2 text-[4.1cqw] font-light leading-[1.25]">{position}</p>
+
+        <h1
+          className="mt-[2.4cqw] max-w-[60%] break-words font-bold uppercase leading-[1.1]"
+          style={{ fontSize: `${nameFontSize(nameLines)}cqw` }}
+        >
+          {nameLines.map((line) => (
+            <span key={line} className="block">
+              {line}
+            </span>
+          ))}
+        </h1>
+
+        {link && (
+          <a
+            href={toHref(link)}
+            target="_blank"
+            rel="noreferrer noopener"
+            tabIndex={interactive ? 0 : -1}
+            className="mt-[2cqw] -ml-[1.4cqw] max-w-[52%] truncate text-[3.1cqw] font-light focus-visible:outline focus-visible:outline-2 focus-visible:outline-white"
+          >
+            {link}
+          </a>
+        )}
+      </div>
+
+      <div className="absolute bottom-[3.4%] right-[11.3%] aspect-square w-[21.6cqw]">
+        <span className="absolute left-0 top-0 h-[3.8cqw] w-[3.8cqw] border-l-[0.9cqw] border-t-[0.9cqw] border-white" />
+        <span className="absolute right-0 top-0 h-[3.8cqw] w-[3.8cqw] border-r-[0.9cqw] border-t-[0.9cqw] border-white" />
+        <span className="absolute bottom-0 left-0 h-[3.8cqw] w-[3.8cqw] border-b-[0.9cqw] border-l-[0.9cqw] border-white" />
+        <span className="absolute bottom-0 right-0 h-[3.8cqw] w-[3.8cqw] border-b-[0.9cqw] border-r-[0.9cqw] border-white" />
+        <div className="absolute inset-[2.2cqw] rounded-[0.8cqw] bg-white p-[1.2cqw]">
+          <QRCodeSVG
+            value={qrValue}
+            size={256}
+            level="M"
+            marginSize={0}
+            fgColor="#220210"
+            bgColor="#ffffff"
+            className="h-full w-full"
+          />
+        </div>
+      </div>
     </div>
   );
 }

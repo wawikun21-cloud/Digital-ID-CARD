@@ -23,6 +23,9 @@ export function useDigitalIdForm(initialDigitalId = null) {
   // changed something" so loading a record doesn't immediately
   // re-save it as if it were an edit.
   const hasLoadedRef = useRef(false);
+  // Images (photo/logo) that changed since the last save. Only these are
+  // re-uploaded; text edits save without resending the files.
+  const pendingUploadsRef = useRef({ photo: false, logo: false });
 
   const loadDigitalId = useCallback((data) => {
     hasLoadedRef.current = true;
@@ -31,10 +34,13 @@ export function useDigitalIdForm(initialDigitalId = null) {
 
   useEffect(() => {
     if (!hasLoadedRef.current || !digitalId) return;
-    saveDigitalId(digitalId);
+    const uploads = pendingUploadsRef.current;
+    pendingUploadsRef.current = { photo: false, logo: false };
+    saveDigitalId(digitalId, uploads).catch((error) => console.error(error));
   }, [digitalId]);
 
   const updateField = useCallback((field, value) => {
+    if (field === 'photo' || field === 'logo') pendingUploadsRef.current[field] = true;
     setDigitalId((prev) => ({ ...prev, [field]: value }));
   }, []);
 

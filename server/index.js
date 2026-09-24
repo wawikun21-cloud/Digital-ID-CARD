@@ -7,7 +7,11 @@ import { fileURLToPath } from 'url';
 import dotenv from 'dotenv';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-dotenv.config({ path: path.join(__dirname, '.env') });
+const nodeEnv = process.env.NODE_ENV || 'development';
+const envPath = nodeEnv === 'production'
+  ? path.join(__dirname, '.env.production')
+  : path.join(__dirname, '.env.development');
+dotenv.config({ path: envPath });
 
 import digitalIdRoutes from './features/digital-id/routes/digital-id.js';
 import authRoutes from './features/auth/routes/auth.js';
@@ -17,6 +21,8 @@ import runMigration001 from './migrations/001-create-digital-id.js';
 import runMigration001Mysql from './migrations/001-create-digital-id-mysql.js';
 import runMigration002 from './migrations/002-create-users.js';
 import runMigration002Mysql from './migrations/002-create-users-mysql.js';
+import runMigration003 from './migrations/003-add-id-number.js';
+import runMigration003Mysql from './migrations/003-add-id-number-mysql.js';
 const env = process.env.NODE_ENV || 'development';
 const PORT = process.env.PORT || 5000;
 
@@ -70,9 +76,11 @@ async function start() {
       if (driver === 'mysql') {
         await runMigration001Mysql();
         await runMigration002Mysql();
+        await runMigration003Mysql();
       } else {
         await runMigration001();
         await runMigration002();
+        await runMigration003();
       }
     } else {
       console.log('Migrations skipped because RUN_MIGRATIONS=false');

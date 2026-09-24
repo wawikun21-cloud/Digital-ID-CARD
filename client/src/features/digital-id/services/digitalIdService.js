@@ -15,23 +15,17 @@
  * way.
  */
 
-import defaultProfilePhoto from '../../../assets/default-profile.jpg';
-
-/**
- * Photo used when a Digital ID has no uploaded picture of its own.
- * Exported so the form can offer "restore default" after an upload.
- */
-export const DEFAULT_PROFILE_PHOTO = defaultProfilePhoto;
-
 const MOCK_DIGITAL_ID = {
   id: 'CIT-2026-0001',
+  idNumber: '000001',
   name: 'Benneth A. Aloyon, MIT',
   position: 'Dean, College of Information Technology',
   secondaryRole: 'Founder, BAA Digital Marketing Services',
   department: 'College of Information Technology',
   organization: 'BAA Digital',
   bio: 'Turning bold ideas into working systems — one launch at a time.',
-  photo: DEFAULT_PROFILE_PHOTO,
+  photo: null,
+  logo: null,
   contact: {
     phone: '+63 931 984 9574',
     website: 'www.baadigital.com',
@@ -51,29 +45,24 @@ function isDataUrl(value) {
   return typeof value === 'string' && value.startsWith('data:');
 }
 
-async function toFormData(digitalId) {
-  const form = new FormData();
-  form.set('id', digitalId.id);
-  form.set('name', digitalId.name);
-  form.set('position', digitalId.position);
-  form.set('secondary_role', digitalId.secondaryRole);
-  form.set('department', digitalId.department);
-  form.set('organization', digitalId.organization);
-  form.set('bio', digitalId.bio);
-  form.set('contact_phone', digitalId.contact.phone);
-  form.set('contact_website', digitalId.contact.website);
-  form.set('contact_email', digitalId.contact.email);
-  form.set('issued', digitalId.issued);
-  form.set('expires', digitalId.expires);
-  form.set('social_links', JSON.stringify(digitalId.socialLinks));
+function dataUrlToBlob(dataUrl) {
+  return fetch(dataUrl).then((response) => response.blob());
+}
 
-  if (isDataUrl(digitalId.photo)) {
-    const response = await fetch(digitalId.photo);
-    const blob = await response.blob();
-    form.set('photo', blob, 'photo.jpg');
-  }
-
-  return form;
+function appendFields(target, digitalId) {
+  target.set('id_number', digitalId.idNumber ?? '');
+  target.set('name', digitalId.name);
+  target.set('position', digitalId.position);
+  target.set('secondary_role', digitalId.secondaryRole);
+  target.set('department', digitalId.department);
+  target.set('organization', digitalId.organization);
+  target.set('bio', digitalId.bio);
+  target.set('contact_phone', digitalId.contact.phone);
+  target.set('contact_website', digitalId.contact.website);
+  target.set('contact_email', digitalId.contact.email);
+  target.set('issued', digitalId.issued);
+  target.set('expires', digitalId.expires);
+  target.set('social_links', JSON.stringify(digitalId.socialLinks));
 }
 
 function cloneDefault() {
@@ -91,43 +80,37 @@ export async function fetchDigitalId() {
   return {
     ...cloneDefault(),
     ...data,
-    photo: data.photo ? data.photo : DEFAULT_PROFILE_PHOTO,
+    photo: data.photo || null,
+    logo: data.logo || null,
     contact: { ...MOCK_DIGITAL_ID.contact, ...(data.contact ?? {}) },
   };
 }
 
-function isDefaultPhoto(value) {
-  return value === DEFAULT_PROFILE_PHOTO;
-}
-
-export async function saveDigitalId(digitalId) {
-  const hasPhoto = isDataUrl(digitalId.photo);
+/**
+ * `uploads` says which images changed since the last save. The photo and
+ * logo come back from the API as data URLs, so without this every
+ * keystroke in the form would re-upload both files.
+ *
+ * @param {object} digitalId
+ * @param {{ photo?: boolean, logo?: boolean }} [uploads]
+ */
+export async function saveDigitalId(digitalId, uploads = {}) {
+  const sendPhoto = Boolean(uploads.photo) && isDataUrl(digitalId.photo);
+  const sendLogo = Boolean(uploads.logo) && isDataUrl(digitalId.logo);
   let body;
 
-  if (hasPhoto) {
-    body = await toFormData(digitalId);
+  if (sendPhoto || sendLogo) {
+    body = new FormData();
+    appendFields(body, digitalId);
+    if (sendPhoto) body.set('photo', await dataUrlToBlob(digitalId.photo), 'photo.png');
+    if (sendLogo) body.set('logo', await dataUrlToBlob(digitalId.logo), 'logo.png');
   } else {
-    body = {
-      id: digitalId.id,
-      name: digitalId.name,
-      position: digitalId.position,
-      secondary_role: digitalId.secondaryRole,
-      department: digitalId.department,
-      organization: digitalId.organization,
-      bio: digitalId.bio,
-      contact_phone: digitalId.contact.phone,
-      contact_website: digitalId.contact.website,
-      contact_email: digitalId.contact.email,
-      issued: digitalId.issued,
-      expires: digitalId.expires,
-      social_links: JSON.stringify(digitalId.socialLinks),
-      photo: null,
-    };
+    body = new URLSearchParams();
+    appendFields(body, digitalId);
   }
 
   const res = await fetch(API_BASE, {
     method: 'PUT',
-    headers: hasPhoto ? undefined : { 'Content-Type': 'application/json' },
     body,
     credentials: 'include',
   });

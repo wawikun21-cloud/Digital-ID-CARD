@@ -1,9 +1,10 @@
-import { getDigitalId, saveDigitalId, deleteDigitalId } from '../services/digitalIdService.js';
+import { getDigitalId, saveDigitalIdForUser, deleteDigitalId } from '../services/digitalIdService.js';
 
 function normalizeBody(body) {
   const isFormData = !body || typeof body !== 'object' || body instanceof String;
   if (!isFormData && typeof body.name === 'string') {
     return {
+      id_number: body.id_number ?? body.idNumber,
       name: body.name,
       position: body.position,
       secondary_role: body.secondary_role ?? body.secondaryRole,
@@ -26,6 +27,7 @@ function normalizeBody(body) {
   }
 
   return {
+    id_number: body.id_number,
     name: body.name,
     position: body.position,
     secondary_role: body.secondary_role,
@@ -61,23 +63,25 @@ export async function getDigitalIdHandler(req, res) {
   }
 }
 
+const PNG_SIGNATURE = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+
+function isPng(buffer) {
+  return Buffer.isBuffer(buffer) && buffer.subarray(0, 8).equals(PNG_SIGNATURE);
+}
+
 export async function putDigitalIdHandler(req, res) {
   try {
-    let photoBuffer = null;
+    const photoBuffer = req.files?.photo?.[0]?.buffer ?? null;
+    // Only admins may change the company logo (same rule as stripAdminFields).
+    const logoBuffer = req.user.role === 'admin' ? (req.files?.logo?.[0]?.buffer ?? null) : null;
 
-    if (req.file) {
-      photoBuffer = req.file.buffer;
-    } else if (typeof req.body.photo === 'string') {
-      const dataUrl = req.body.photo;
-      const match = dataUrl.match(/^data:(image\/[a-z]+);base64,(.+)$/);
-      if (match) {
-        photoBuffer = Buffer.from(match[2], 'base64');
-      }
+    if ((photoBuffer && !isPng(photoBuffer)) || (logoBuffer && !isPng(logoBuffer))) {
+      return res.status(400).json({ error: 'Photo and logo must be PNG images.' });
     }
 
     const normalized = normalizeBody(req.body);
     const stripped = stripAdminFields(normalized, req.user.role);
-    const saved = await saveDigitalId(req.user.id, stripped, photoBuffer);
+    const saved = await saveDigitalIdForUser(req.user.id, stripped, photoBuffer, null, logoBuffer);
     res.json(saved);
   } catch (err) {
     console.error('PUT /api/digital-id error', err);

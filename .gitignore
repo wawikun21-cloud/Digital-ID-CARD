@@ -1,6 +1,8 @@
 node_modules
 client/dist
-client/.env
-server/.env
+client/.env.development
+client/.env.production
+server/.env.development
+server/.env.production
 .env
 

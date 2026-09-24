@@ -10,7 +10,10 @@ import { authMiddleware } from '../../../middleware/auth.js';
 const router = Router();
 
 router.get('', authMiddleware, getDigitalIdHandler);
-router.put('', authMiddleware, upload.single('photo'), putDigitalIdHandler);
+router.put('', authMiddleware, upload.fields([
+    { name: 'photo', maxCount: 1 },
+    { name: 'logo', maxCount: 1 },
+  ]), putDigitalIdHandler);
 router.delete('', authMiddleware, deleteDigitalIdHandler);
 
 export default router;

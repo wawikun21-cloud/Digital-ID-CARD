@@ -5,9 +5,9 @@ const MAX_UPLOAD_BYTES = 8 * 1024 * 1024;
 const memoryStorage = multer.memoryStorage();
 
 function fileFilter(req, file, cb) {
-  const allowed = ['image/jpeg', 'image/png', 'image/webp'];
+  const allowed = ['image/png'];
   if (!allowed.includes(file.mimetype)) {
-    return cb(new Error('Only JPG, PNG and WebP images are allowed.'), false);
+    return cb(new Error('Only PNG images are allowed.'), false);
   }
   cb(null, true);
 }

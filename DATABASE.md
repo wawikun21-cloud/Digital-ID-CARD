@@ -3,11 +3,11 @@
 ## Quick Start
 
 1. Choose your database: **WAMPserver/MariaDB** (local dev) or **Hostinger/PostgreSQL** (production).
-2. Set `NODE_ENV` in `server/.env`.
+2. Set `NODE_ENV` in `server/.env.development`.
 3. Fill in the matching connection block.
 4. Run `npm run migrate` (PostgreSQL) or `npm run migrate:mysql` (MariaDB/MySQL).
 
-## server/.env (development)
+## server/.env.development (development)
 
 ```env
 NODE_ENV=development
@@ -23,7 +23,7 @@ DB_PASSWORD=
 DB_NAME=digital_id_card
 ```
 
-## server/.env (production)
+## server/.env.production (production)
 
 ```env
 NODE_ENV=production
@@ -53,7 +53,7 @@ This is useful for:
    ```sql
    CREATE DATABASE digital_id_card CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
    ```
-3. In `server/.env`, use the **development** config above.
+3. In `server/.env.development`, use the **development** config above.
 4. Run the MySQL migration:
    ```bash
    npm run migrate:mysql
@@ -72,7 +72,7 @@ If you have PostgreSQL installed locally:
    CREATE DATABASE digital_id_card;
    ```
 
-2. In `server/.env`, add a production-style `DATABASE_URL` or keep the default PostgreSQL block and run:
+2. In `server/.env.development`, add a production-style `DATABASE_URL` or keep the default PostgreSQL block and run:
    ```bash
    npm run migrate
    ```

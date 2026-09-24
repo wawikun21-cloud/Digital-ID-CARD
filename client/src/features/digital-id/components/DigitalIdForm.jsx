@@ -3,6 +3,7 @@ import TextAreaField from '../../../shared/components/TextAreaField';
 import { PlusIcon, TrashIcon, ResetIcon } from '../../../shared/components/icons';
 import { detectSocialPlatform } from '../utils/digitalIdUtils';
 import ProfilePhotoField from './ProfilePhotoField';
+import { processLogo } from '../utils/imageUtils';
 import { SOCIAL_ICONS } from '../utils/socialIcons';
 
 export default function DigitalIdForm({
@@ -29,7 +30,6 @@ export default function DigitalIdForm({
     >
       <ProfilePhotoField
         photo={digitalId.photo}
-        name={digitalId.name}
         onChange={(value) => onUpdateField('photo', value)}
       />
 
@@ -37,25 +37,19 @@ export default function DigitalIdForm({
         <fieldset className="flex flex-col gap-3">
           <legend className="mb-1 text-sm font-semibold text-ink">Branding</legend>
           <label className="flex flex-col gap-1">
-            <span className="text-sm font-medium text-ink">Background color</span>
-            <input
-              type="color"
-              value={digitalId.background || '#ffffff'}
-              onChange={(e) => onUpdateField('background', e.target.value)}
-              className="h-10 w-full rounded-lg border border-line bg-paper px-3 py-2 text-sm text-ink outline-none transition focus:border-gold focus:ring-1 focus:ring-gold"
-            />
-          </label>
-          <label className="flex flex-col gap-1">
-            <span className="text-sm font-medium text-ink">Logo</span>
+            <span className="text-sm font-medium text-ink">Company logo (PNG)</span>
             <input
               type="file"
-              accept="image/*"
-              onChange={(e) => {
+              accept="image/png"
+              onChange={async (e) => {
                 const file = e.target.files?.[0];
+                e.target.value = '';
                 if (!file) return;
-                const reader = new FileReader();
-                reader.onload = () => onUpdateField('logo', reader.result);
-                reader.readAsDataURL(file);
+                try {
+                  onUpdateField('logo', await processLogo(file));
+                } catch (err) {
+                  window.alert(err.message);
+                }
               }}
               className="rounded-lg border border-line bg-paper px-3 py-2 text-sm text-ink outline-none transition focus:border-gold focus:ring-1 focus:ring-gold"
             />
@@ -91,7 +85,7 @@ export default function DigitalIdForm({
         />
         <TextField
           id="field-organization"
-          label="Organization"
+          label="Company name"
           value={digitalId.organization}
           onChange={(value) => onUpdateField('organization', value)}
         />
@@ -107,8 +101,8 @@ export default function DigitalIdForm({
         <TextField
           id="field-id"
           label="ID number"
-          value={digitalId.id}
-          onChange={(value) => onUpdateField('id', value)}
+          value={digitalId.idNumber ?? ''}
+          onChange={(value) => onUpdateField('idNumber', value)}
         />
       </fieldset>
 
@@ -122,7 +116,7 @@ export default function DigitalIdForm({
         />
         <TextField
           id="field-website"
-          label="Website"
+          label="Link (shown on the card)"
           value={digitalId.contact.website}
           onChange={(value) => onUpdateContactField('website', value)}
         />

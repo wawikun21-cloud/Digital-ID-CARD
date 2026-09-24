@@ -20,7 +20,7 @@ import { SOCIAL_ICONS } from '../utils/socialIcons';
  * <svg> node without needing the card flipped to the back first.
  */
 export default function DigitalIdBack({ digitalId, interactive = true, qrRef }) {
-  const { id, organization, qrData, issued, expires, socialLinks = [] } = digitalId;
+  const { id, idNumber, organization, qrData, issued, expires, socialLinks = [] } = digitalId;
   const validLinks = socialLinks.filter((link) => link.url.trim() !== '');
 
   // Derived from the ID number unless the record pins its own value,
@@ -71,7 +71,7 @@ export default function DigitalIdBack({ digitalId, interactive = true, qrRef }) 
       <footer className="w-full">
         <div className="h-px w-full bg-paper/15" />
         <div className="mt-[0.6em] flex flex-col items-center gap-[0.15em] text-center text-[0.58em] text-paper/60">
-          <span className="font-mono tracking-[0.05em]">{id}</span>
+          <span className="font-mono tracking-[0.05em]">{idNumber || id}</span>
           <span>
             Issued {formatIssueDate(issued)} · Valid to {formatIssueDate(expires)}
           </span>

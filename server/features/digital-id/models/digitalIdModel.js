@@ -28,6 +28,18 @@ function formatDateValue(value) {
   return `${year}-${month}-${day}`;
 }
 
+/**
+ * BLOB column -> data URL. The client uses the value straight as an
+ * <img src>, so it needs the `data:` prefix (a bare base64 string
+ * renders as a broken image). Only PNG and JPEG are ever stored.
+ */
+function bufferToDataUrl(value) {
+  if (!value) return null;
+  const buffer = Buffer.isBuffer(value) ? value : Buffer.from(value);
+  const mime = buffer[0] === 0xff && buffer[1] === 0xd8 ? 'image/jpeg' : 'image/png';
+  return `data:${mime};base64,${buffer.toString('base64')}`;
+}
+
 function rowToRecord(row) {
   return {
     id: row.id,
@@ -38,9 +50,10 @@ function rowToRecord(row) {
     department: row.department,
     organization: row.organization,
     bio: row.bio,
-    photo: row.photo ? row.photo.toString('base64') : null,
+    idNumber: row.id_number ?? '',
+    photo: bufferToDataUrl(row.photo),
     background: row.background || null,
-    logo: row.logo ? row.logo.toString('base64') : null,
+    logo: bufferToDataUrl(row.logo),
     contact: {
       phone: row.contact_phone,
       website: row.contact_website,
@@ -206,6 +219,7 @@ export async function upsertForUser(userId, data, photoBuffer = null, background
     data.issued ?? SEED.issued,
     data.expires ?? SEED.expires,
     data.social_links ?? SEED.social_links,
+    data.id_number ?? '',
   ];
 
   let sql;
@@ -214,9 +228,9 @@ export async function upsertForUser(userId, data, photoBuffer = null, background
       INSERT INTO ${TABLE} (
         id, user_id, name, position, secondary_role, department, organization,
         bio, photo, background, logo, contact_phone, contact_website, contact_email,
-        issued, expires, social_links, created_at, updated_at
+        issued, expires, social_links, id_number, created_at, updated_at
       )
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(6), NOW(6))
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(6), NOW(6))
       ON DUPLICATE KEY UPDATE
         name = VALUES(name),
         position = VALUES(position),
@@ -233,6 +247,7 @@ export async function upsertForUser(userId, data, photoBuffer = null, background
         issued = VALUES(issued),
         expires = VALUES(expires),
         social_links = VALUES(social_links),
+        id_number = VALUES(id_number),
         updated_at = NOW(6)
     `;
   } else {
@@ -240,12 +255,12 @@ export async function upsertForUser(userId, data, photoBuffer = null, background
       INSERT INTO ${TABLE} (
         id, user_id, name, position, secondary_role, department, organization,
         bio, photo, background, logo, contact_phone, contact_website, contact_email,
-        issued, expires, social_links, created_at, updated_at
+        issued, expires, social_links, id_number, created_at, updated_at
       )
       VALUES (
         ${placeholder(1)}, ${placeholder(2)}, ${placeholder(3)}, ${placeholder(4)}, ${placeholder(5)}, ${placeholder(6)},
         ${placeholder(7)}, ${placeholder(8)}, ${placeholder(9)}, ${placeholder(10)}, ${placeholder(11)}, ${placeholder(12)}, ${placeholder(13)}, ${placeholder(14)},
-        ${placeholder(15)}, ${placeholder(16)}, ${placeholder(17)},
+        ${placeholder(15)}, ${placeholder(16)}, ${placeholder(17)}, ${placeholder(18)},
         COALESCE((SELECT created_at FROM ${TABLE} WHERE user_id = ${placeholder(2)}), NOW()),
         NOW()
       )
@@ -265,6 +280,7 @@ export async function upsertForUser(userId, data, photoBuffer = null, background
         issued = EXCLUDED.issued,
         expires = EXCLUDED.expires,
         social_links = EXCLUDED.social_links,
+        id_number = EXCLUDED.id_number,
         updated_at = NOW()
       RETURNING *
     `;

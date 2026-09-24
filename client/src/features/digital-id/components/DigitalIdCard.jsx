@@ -77,7 +77,7 @@ export default function DigitalIdCard({ digitalId }) {
             style={{ transform: `rotateY(${flipped ? 180 : 0}deg)` }}
           >
             <div className="id-face rounded-2xl border border-line" aria-hidden={flipped}>
-              <DigitalIdFront digitalId={digitalId} />
+              <DigitalIdFront digitalId={digitalId} interactive={!flipped} />
             </div>
             <div className="id-face id-face--back rounded-2xl border border-ink/40" aria-hidden={!flipped}>
               <DigitalIdBack digitalId={digitalId} interactive={flipped} qrRef={qrRef} />
