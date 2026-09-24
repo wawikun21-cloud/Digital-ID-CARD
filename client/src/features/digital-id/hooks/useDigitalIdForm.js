@@ -3,7 +3,7 @@ import { createLocalId } from '../utils/digitalIdUtils';
 import {
   saveDigitalId,
   clearStoredDigitalId,
-  getDefaultDigitalId,
+  fetchDigitalId,
 } from '../services/digitalIdService';
 
 /**
@@ -109,16 +109,14 @@ export function useDigitalIdForm(initialDigitalId = null) {
   const resetToDefault = useCallback(async () => {
     try {
       await clearStoredDigitalId();
+      const data = await fetchDigitalId();
+      latestRef.current = data;
+      setDigitalId(data);
+      setDirty(false);
+      setSaveStatus(null);
     } catch (error) {
       setSaveStatus({ type: 'error', message: error.message });
-      return;
     }
-    pendingUploadsRef.current = { photo: false, logo: false };
-    const defaults = getDefaultDigitalId();
-    latestRef.current = defaults;
-    setDigitalId(defaults);
-    setDirty(true);
-    setSaveStatus(null);
   }, []);
 
   return {

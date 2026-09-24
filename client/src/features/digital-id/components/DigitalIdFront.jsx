@@ -19,11 +19,15 @@ import { nameFontSize, splitCompanyName, splitFullName } from '../utils/cardText
  * query on the root), so the card scales as one piece at any width.
  */
 export default function DigitalIdFront({ digitalId, interactive = true, qrRef }) {
-  const { id, idNumber, name, position, organization, photo, logo, qrData, contact } = digitalId;
+  const { id, idNumber, name, position, organization, photo, logo, qrData, websiteLink, contact } =
+    digitalId;
   const company = splitCompanyName(organization);
   const nameLines = splitFullName(name);
   const link = contact?.website?.trim();
-  const qrValue = qrData || buildVerifyUrl(id);
+  const qrLink = websiteLink?.trim();
+  // The QR points at the Website link from the form; with none set it keeps
+  // the previous behaviour (verification page) so it is never blank.
+  const qrValue = qrLink ? toHref(qrLink) : qrData || buildVerifyUrl(id);
 
   return (
     <div className="id-surface relative h-full w-full overflow-hidden bg-[#220210] font-card text-white [container-type:inline-size]">

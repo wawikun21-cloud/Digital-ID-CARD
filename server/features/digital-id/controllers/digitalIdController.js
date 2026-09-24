@@ -11,6 +11,7 @@ function normalizeBody(body) {
       secondary_role: body.secondary_role ?? body.secondaryRole,
       department: body.department,
       organization: body.organization,
+      website_link: body.website_link ?? body.websiteLink,
       bio: body.bio,
       contact_phone: body.contact?.phone ?? body.contact_phone,
       contact_website: body.contact?.website ?? body.contact_website,
@@ -35,6 +36,7 @@ function normalizeBody(body) {
     secondary_role: body.secondary_role,
     department: body.department,
     organization: body.organization,
+    website_link: body.website_link,
     bio: body.bio,
     contact_phone: body.contact_phone,
     contact_website: body.contact_website,
@@ -99,4 +101,4 @@ export async function deleteDigitalIdHandler(req, res) {
     console.error('DELETE /api/digital-id error', err);
     res.status(500).json({ error: 'Failed to reset digital ID.' });
   }
-} 
+}

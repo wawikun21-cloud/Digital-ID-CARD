@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
 import DigitalIdCard from '../components/DigitalIdCard';
 import { ShieldCheckIcon } from '../../../shared/components/icons';
 import { fetchDigitalId } from '../services/digitalIdService';
@@ -15,18 +14,13 @@ import { fetchDigitalId } from '../services/digitalIdService';
  * visitor could use to alter the record.
  */
 export default function DigitalIdViewPage() {
-  // Not used yet: `fetchDigitalId` always resolves the one mock
-  // record. Once it takes a real endpoint, pass `id` through so this
-  // page looks up the ID that was actually scanned instead of always
-  // showing the same one.
-  const { id } = useParams();
   const [digitalId, setDigitalId] = useState(null);
   const [error, setError] = useState(null);
 
   useEffect(() => {
     let cancelled = false;
 
-    fetchDigitalId(id)
+    fetchDigitalId()
       .then((data) => {
         if (!cancelled) setDigitalId(data);
       })
@@ -37,7 +31,7 @@ export default function DigitalIdViewPage() {
     return () => {
       cancelled = true;
     };
-  }, [id]);
+  }, []);
 
   return (
     <main className="flex min-h-svh flex-col items-center bg-cream px-6 py-14">
