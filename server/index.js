@@ -25,6 +25,8 @@ import runMigration003 from './migrations/003-add-id-number.js';
 import runMigration003Mysql from './migrations/003-add-id-number-mysql.js';
 import runMigration004 from './migrations/004-add-website-link.js';
 import runMigration004Mysql from './migrations/004-add-website-link-mysql.js';
+import runMigration005 from './migrations/005-add-employee-role.js';
+import runMigration005Mysql from './migrations/005-add-employee-role-mysql.js';
 const env = process.env.NODE_ENV || 'development';
 const PORT = process.env.PORT || 5000;
 
@@ -80,11 +82,13 @@ async function start() {
         await runMigration002Mysql();
         await runMigration003Mysql();
         await runMigration004Mysql();
+        await runMigration005Mysql();
       } else {
         await runMigration001();
         await runMigration002();
         await runMigration003();
         await runMigration004();
+        await runMigration005();
       }
     } else {
       console.log('Migrations skipped because RUN_MIGRATIONS=false');

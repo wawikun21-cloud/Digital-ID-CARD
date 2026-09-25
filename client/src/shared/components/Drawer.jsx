@@ -10,6 +10,9 @@ import { CloseIcon } from './icons';
  * full-height side panel on the right. Same component, same behaviour,
  * two idioms.
  *
+ * An optional `footer` is pinned under the scrolling content (outside it,
+ * so no scroll padding can open a gap beneath it).
+ *
  * Kept generic — it knows nothing about Digital IDs, only how to open,
  * close and behave itself while open. The panel stays mounted when
  * closed so the slide animation has something to animate, and is marked
@@ -21,7 +24,7 @@ import { CloseIcon } from './icons';
  * into the panel on open, focus returned to the trigger on close, and
  * Tab wrapped inside the panel so it can't wander behind the backdrop.
  */
-export default function Drawer({ open, onClose, title, description, children }) {
+export default function Drawer({ open, onClose, title, description, footer, children }) {
   const panelRef = useRef(null);
   const lastFocusedRef = useRef(null);
 
@@ -140,6 +143,12 @@ export default function Drawer({ open, onClose, title, description, children }) 
         <div className="flex-1 overflow-y-auto overscroll-contain px-5 py-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] sm:px-6">
           {children}
         </div>
+
+        {footer && (
+          <div className="shrink-0 border-t border-line bg-paper px-5 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:px-6">
+            {footer}
+          </div>
+        )}
       </aside>
     </>
   );

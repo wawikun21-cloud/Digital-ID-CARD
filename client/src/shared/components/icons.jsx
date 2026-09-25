@@ -299,3 +299,49 @@ export function LinkIcon(props) {
     </svg>
   );
 }
+
+export function IdCardIcon(props) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" width="18" height="18" {...props}>
+      <rect x="3" y="5.5" width="18" height="13" rx="2.2" stroke="currentColor" strokeWidth="1.5" />
+      <circle cx="8.6" cy="11" r="1.9" stroke="currentColor" strokeWidth="1.4" />
+      <path d="M5.8 15.3c.4-1.3 1.5-2 2.8-2s2.4.7 2.8 2" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+      <path d="M14.5 10h4M14.5 13.2h4" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+export function UsersIcon(props) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" width="18" height="18" {...props}>
+      <circle cx="9.3" cy="8.5" r="2.8" stroke="currentColor" strokeWidth="1.5" />
+      <path d="M3.8 18c.6-2.8 2.8-4.4 5.5-4.4s4.9 1.6 5.5 4.4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+      <path d="M15.3 6.3a2.8 2.8 0 0 1 0 5.4M17.8 18c-.3-1.9-1.2-3.3-2.6-4.1" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+export function LogoutIcon(props) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" width="18" height="18" {...props}>
+      <path d="M13.5 4.5H7a1.5 1.5 0 0 0-1.5 1.5v12A1.5 1.5 0 0 0 7 19.5h6.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M10.5 12H20M20 12l-3-3M20 12l-3 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+export function ChevronLeftIcon(props) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" width="14" height="14" {...props}>
+      <path d="M14.5 5.5 8 12l6.5 6.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+export function ChevronRightIcon(props) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" width="14" height="14" {...props}>
+      <path d="M9.5 5.5 16 12l-6.5 6.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import DigitalIdCard from '../components/DigitalIdCard';
 import DigitalIdForm from '../components/DigitalIdForm';
+import DigitalIdSaveBar from '../components/DigitalIdSaveBar';
 import Drawer from '../../../shared/components/Drawer';
 import { PencilIcon } from '../../../shared/components/icons';
 import { useDigitalIdForm } from '../hooks/useDigitalIdForm';
@@ -46,9 +47,7 @@ export default function DigitalIdPage() {
 
   return (
     <main className="flex min-h-svh flex-col items-center bg-cream px-6 py-14">
-      
-
-      <div className=" flex w-full max-w-md flex-col items-center">
+      <div className="flex w-full max-w-md flex-col items-center">
         {error && <p className="text-center text-sm text-maroon-light">{error}</p>}
         {!error && !digitalId && (
           <div
@@ -79,6 +78,7 @@ export default function DigitalIdPage() {
               onClose={closeEditor}
               title="Edit Digital ID"
               description="The card previews your changes. Press Save to keep them."
+              footer={<DigitalIdSaveBar onSave={save} saving={saving} dirty={dirty} saveStatus={saveStatus} />}
             >
               <DigitalIdForm
                 digitalId={digitalId}
@@ -88,10 +88,6 @@ export default function DigitalIdPage() {
                 onUpdateSocialLink={updateSocialLink}
                 onRemoveSocialLink={removeSocialLink}
                 onResetToDefault={resetToDefault}
-                onSave={save}
-                saving={saving}
-                dirty={dirty}
-                saveStatus={saveStatus}
                 isAdmin={user?.role === 'admin'}
               />
             </Drawer>

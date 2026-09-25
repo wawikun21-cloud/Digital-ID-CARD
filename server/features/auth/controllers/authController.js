@@ -63,11 +63,46 @@ export async function meHandler(req, res) {
   });
 }
 
+const ROLES = ['user', 'admin'];
+const USERNAME_PATTERN = /^[A-Za-z0-9._-]{3,50}$/;
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const MIN_PASSWORD_LENGTH = 8;
+
+/** Returns an error message for the first invalid field that was provided, else null. */
+function validateUserFields({ username, email, password, role }) {
+  if (username !== undefined && !USERNAME_PATTERN.test(username)) {
+    return 'Username must be 3-50 characters: letters, numbers, dots, dashes or underscores.';
+  }
+  if (email !== undefined && (email.length > 191 || !EMAIL_PATTERN.test(email))) {
+    return 'Enter a valid email address.';
+  }
+  if (password !== undefined && password.length < MIN_PASSWORD_LENGTH) {
+    return `Password must be at least ${MIN_PASSWORD_LENGTH} characters.`;
+  }
+  if (role !== undefined && !ROLES.includes(role)) {
+    return 'Role must be "user" or "admin".';
+  }
+  return null;
+}
+
+function cleanString(value) {
+  return typeof value === 'string' ? value.trim() : undefined;
+}
+
 export async function createUserHandler(req, res) {
-  const { username, email, password, role = 'user', full_name = '' } = req.body;
+  const username = cleanString(req.body.username);
+  const email = cleanString(req.body.email);
+  const password = typeof req.body.password === 'string' ? req.body.password : undefined;
+  const role = req.body.role === undefined || req.body.role === '' ? 'user' : req.body.role;
+  const full_name = cleanString(req.body.full_name) ?? '';
 
   if (!username || !email || !password) {
     return res.status(400).json({ error: 'Username, email, and password are required.' });
+  }
+
+  const invalid = validateUserFields({ username, email, password, role });
+  if (invalid) {
+    return res.status(400).json({ error: invalid });
   }
 
   const existingUsername = await findUserByUsername(username);
@@ -99,7 +134,16 @@ export async function listUsersHandler(req, res) {
 
 export async function updateUserHandler(req, res) {
   const userId = req.params.id;
-  const { username, email, password, role, full_name } = req.body;
+  const username = cleanString(req.body.username);
+  const email = cleanString(req.body.email);
+  const password = typeof req.body.password === 'string' ? req.body.password : undefined;
+  const role = req.body.role;
+  const full_name = cleanString(req.body.full_name);
+
+  const invalid = validateUserFields({ username, email, password, role });
+  if (invalid) {
+    return res.status(400).json({ error: invalid });
+  }
 
   if (username) {
     const existing = await findUserByUsername(username);

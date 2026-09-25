@@ -1,5 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './features/auth/AuthContext';
+import { ToastProvider } from './shared/components/ToastProvider';
+import AuthenticatedLayout from './shared/components/AuthenticatedLayout';
 import DigitalIdPage from './features/digital-id/pages/DigitalIdPage';
 import DigitalIdViewPage from './features/digital-id/pages/DigitalIdViewPage';
 import LoginPage from './features/auth/pages/LoginPage';
@@ -24,7 +26,7 @@ function ProtectedRoute({ children, adminOnly = false }) {
     return <Navigate to="/" replace />;
   }
 
-  return children;
+  return <AuthenticatedLayout>{children}</AuthenticatedLayout>;
 }
 
 function AppRoutes() {
@@ -56,9 +58,11 @@ function AppRoutes() {
 export default function App() {
   return (
     <BrowserRouter>
-      <AuthProvider>
-        <AppRoutes />
-      </AuthProvider>
+      <ToastProvider>
+        <AuthProvider>
+          <AppRoutes />
+        </AuthProvider>
+      </ToastProvider>
     </BrowserRouter>
   );
 }

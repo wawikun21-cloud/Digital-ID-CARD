@@ -14,10 +14,6 @@ export default function DigitalIdForm({
   onUpdateSocialLink,
   onRemoveSocialLink,
   onResetToDefault,
-  onSave,
-  saving = false,
-  dirty = false,
-  saveStatus = null,
   isAdmin = false,
 }) {
   function handleResetToDefault() {
@@ -210,27 +206,6 @@ export default function DigitalIdForm({
         <p className="text-[0.7rem] text-ink-soft/70">
           Deletes your saved details right away and restores the defaults.
         </p>
-      </div>
-
-      <div className="sticky bottom-0 -mx-5 -mb-5 flex flex-col gap-2 border-t border-line bg-cream px-5 py-3 sm:-mx-6 sm:px-6">
-        {saveStatus && (
-          <p
-            role={saveStatus.type === 'error' ? 'alert' : 'status'}
-            className={`text-xs font-medium ${
-              saveStatus.type === 'error' ? 'text-maroon-light' : 'text-ink-soft'
-            }`}
-          >
-            {saveStatus.message}
-          </p>
-        )}
-        <button
-          type="button"
-          onClick={onSave}
-          disabled={saving || !dirty}
-          className="rounded-lg bg-ink px-4 py-2.5 text-sm font-semibold text-paper shadow-sm transition hover:bg-maroon-light focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold disabled:cursor-not-allowed disabled:opacity-50"
-        >
-          {saving ? 'Saving…' : dirty ? 'Save changes' : 'Saved'}
-        </button>
       </div>
     </form>
   );
