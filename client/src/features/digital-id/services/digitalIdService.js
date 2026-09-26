@@ -74,6 +74,37 @@ export async function saveDigitalId(digitalId, uploads = {}) {
   return res.json();
 }
 
+/**
+ * Admin-only: read or update another user's four "hidden" card fields
+ * (company name, position, the front-QR link, the "Link (shown on the
+ * card)" field) from the Users list, rather than that person's own
+ * edit form. Backed by server/features/digital-id/routes/digital-id.js's
+ * /admin/:userId routes, which the server also restricts to admins.
+ */
+export async function fetchDigitalIdForUser(userId) {
+  const res = await fetch(`${API_BASE}/admin/${userId}`, { credentials: 'include' });
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({ error: "Failed to load this user's card details." }));
+    throw new Error(data.error || "Failed to load this user's card details.");
+  }
+  return res.json();
+}
+
+export async function updateDigitalIdForUser(userId, fields) {
+  const res = await fetch(`${API_BASE}/admin/${userId}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(fields),
+    credentials: 'include',
+  });
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({ error: "Failed to update this user's card details." }));
+    throw new Error(data.error || "Failed to update this user's card details.");
+  }
+  return res.json();
+}
+
+
 export async function clearStoredDigitalId() {
   const res = await fetch(API_BASE, { method: 'DELETE', credentials: 'include' });
   if (!res.ok && res.status !== 204) throw new Error('Failed to clear digital ID');

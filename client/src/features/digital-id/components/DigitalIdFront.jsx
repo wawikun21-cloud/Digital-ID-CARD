@@ -33,7 +33,7 @@ export default function DigitalIdFront({ digitalId, interactive = true, qrRef })
     <div className="id-surface relative h-full w-full overflow-hidden bg-[#220210] font-card text-white [container-type:inline-size]">
       <img src={backgroundImage} alt="" className="absolute inset-0 h-full w-full object-cover" />
 
-      <div className="absolute bottom-[24%] left-[18%] right-0 top-[5%]">
+      <div className="absolute bottom-[24%] left-[18%] right-[5%] top-[5%]">
         {photo ? (
           <img
             src={photo}

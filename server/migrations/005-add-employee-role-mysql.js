@@ -1,5 +1,6 @@
 import { query } from '../config/database.js';
 import bcrypt from 'bcrypt';
+import crypto from 'node:crypto';
 
 // MySQL / MariaDB counterpart of 005-add-employee-role.js.
 // MySQL ignores CHECK constraints, so we only need to seed the employee users.

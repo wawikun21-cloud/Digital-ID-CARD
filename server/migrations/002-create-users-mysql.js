@@ -1,5 +1,6 @@
 import { query } from '../config/database.js';
 import bcrypt from 'bcrypt';
+import crypto from 'node:crypto';
 
 const CREATE_USERS_SQL = `
 CREATE TABLE IF NOT EXISTS users (

@@ -123,6 +123,55 @@ export async function putDigitalIdHandler(req, res) {
   }
 }
 
+/**
+ * Admin-only: read or update another user's "hidden" card fields —
+ * company name, position, the front-QR link, and the "Link (shown on
+ * the card)" field. These are the same four fields a non-admin cannot
+ * touch on their own card (see ADMIN_ONLY_FIELDS above); this is where
+ * an admin sets them instead, from the Users list rather than that
+ * person's own edit form.
+ */
+export async function getDigitalIdForAdminHandler(req, res) {
+  try {
+    const data = await getDigitalId(req.params.userId);
+    res.json(data);
+  } catch (err) {
+    console.error('GET /api/digital-id/admin/:userId error', err);
+    res.status(500).json({ error: "Failed to load this user's card details." });
+  }
+}
+
+export async function putDigitalIdForAdminHandler(req, res) {
+  try {
+    const current = await getDigitalId(req.params.userId);
+    // Only the four admin-managed fields change; everything else on the
+    // record (name, bio, photo, social links, dates...) is carried over
+    // as-is, since this endpoint only asks the person for those four.
+    const merged = {
+      id_number: current.idNumber,
+      address: current.address,
+      name: current.name,
+      position: req.body.position ?? current.position,
+      secondary_role: current.secondaryRole,
+      department: current.department,
+      organization: req.body.organization ?? current.organization,
+      website_link: req.body.website_link ?? current.websiteLink,
+      bio: current.bio,
+      contact_phone: current.contact.phone,
+      contact_website: req.body.contact_website ?? current.contact.website,
+      contact_email: current.contact.email,
+      issued: current.issued,
+      expires: current.expires,
+      social_links: current.socialLinks,
+    };
+    const saved = await saveDigitalIdForUser(req.params.userId, merged);
+    res.json(saved);
+  } catch (err) {
+    console.error('PUT /api/digital-id/admin/:userId error', err);
+    res.status(500).json({ error: "Failed to update this user's card details." });
+  }
+}
+
 export async function deleteDigitalIdHandler(req, res) {
   try {
     await deleteDigitalIdByUserId(req.user.id);

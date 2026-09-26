@@ -7,6 +7,14 @@ export default defineConfig({
   build: {
     outDir: '../dist',
     emptyOutDir: true,
+    sourcemap: false,
+    reportCompressedSize: false,
+    cssCodeSplit: false,
+    rollupOptions: {
+      output: {
+        manualChunks: undefined,
+      },
+    },
   },
   server: {
     proxy: {

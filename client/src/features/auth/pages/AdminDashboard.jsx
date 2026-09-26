@@ -1,20 +1,69 @@
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
 import { listUsers, createUser, updateUser, deleteUser } from '../services/authService';
+import { fetchDigitalIdForUser, updateDigitalIdForUser } from '../../digital-id/services/digitalIdService';
 import { useToast } from '../../../shared/components/ToastProvider';
+import { useConfirm } from '../../../shared/components/ConfirmProvider';
 import FieldTooltip from '../../../shared/components/FieldTooltip';
-import {
-  validateUsername,
-  validateEmail,
-  validatePassword,
-  validateRole,
-  fieldForServerError,
-} from '../userValidation';
+
+/**
+ * Client-side mirror of the server's user validation rules
+ * (server/features/auth/controllers/authController.js), so invalid input
+ * is caught before a request is sent. Keep the two in sync.
+ */
+const ROLES = ['user', 'admin'];
+const USERNAME_PATTERN = /^[A-Za-z0-9._-]{3,50}$/;
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const MIN_PASSWORD_LENGTH = 8;
+
+function validateUsername(value) {
+  if (!value) return 'Username is required.';
+  if (!USERNAME_PATTERN.test(value)) {
+    return 'Username must be 3-50 characters: letters, numbers, dots, dashes or underscores.';
+  }
+  return null;
+}
+
+function validateEmail(value) {
+  if (!value) return 'Email is required.';
+  if (value.length > 191 || !EMAIL_PATTERN.test(value)) {
+    return 'Enter a valid email address.';
+  }
+  return null;
+}
+
+/** `required: false` for the edit form, where a blank password means "keep the current one". */
+function validatePassword(value, { required = true } = {}) {
+  if (!value) {
+    return required ? 'Password is required.' : null;
+  }
+  if (value.length < MIN_PASSWORD_LENGTH) {
+    return `Password must be at least ${MIN_PASSWORD_LENGTH} characters.`;
+  }
+  return null;
+}
+
+function validateRole(value) {
+  if (value && !ROLES.includes(value)) {
+    return 'Role must be "user" or "admin".';
+  }
+  return null;
+}
+
+/** Best-effort match of a server error message to the field it concerns, for the tooltip. */
+function fieldForServerError(message = '') {
+  const m = message.toLowerCase();
+  if (m.includes('username')) return 'username';
+  if (m.includes('email')) return 'email';
+  if (m.includes('password')) return 'password';
+  if (m.includes('role')) return 'role';
+  return null;
+}
 
 const EMPTY_FORM = { username: '', email: '', password: '', role: 'user', full_name: '' };
 
 export default function AdminDashboard() {
   const { notify } = useToast();
+  const confirm = useConfirm();
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState(null);
@@ -28,6 +77,16 @@ export default function AdminDashboard() {
   const [editErrors, setEditErrors] = useState({});
   const [savingId, setSavingId] = useState(null);
   const [deletingId, setDeletingId] = useState(null);
+
+  const [cardEditId, setCardEditId] = useState(null);
+  const [cardForm, setCardForm] = useState({
+    organization: '',
+    position: '',
+    website_link: '',
+    contact_website: '',
+  });
+  const [cardLoading, setCardLoading] = useState(false);
+  const [cardSavingId, setCardSavingId] = useState(null);
 
   useEffect(() => {
     loadUsers();
@@ -133,7 +192,13 @@ export default function AdminDashboard() {
   }
 
   async function handleDelete(id, username) {
-    if (!window.confirm('Delete this user? This cannot be undone.')) return;
+    const confirmed = await confirm({
+      title: 'Delete user',
+      message: `Delete "${username}"? This cannot be undone.`,
+      confirmLabel: 'Delete',
+      tone: 'danger',
+    });
+    if (!confirmed) return;
     setDeletingId(id);
     try {
       await deleteUser(id);
@@ -151,6 +216,7 @@ export default function AdminDashboard() {
   }
 
   function startEdit(user) {
+    setCardEditId(null);
     setEditId(user.id);
     setEditErrors({});
     setEditForm({
@@ -167,15 +233,50 @@ export default function AdminDashboard() {
     setEditErrors({});
   }
 
+  function setCardField(field, value) {
+    setCardForm((prev) => ({ ...prev, [field]: value }));
+  }
+
+  async function startCardEdit(user) {
+    setEditId(null);
+    setCardEditId(user.id);
+    setCardLoading(true);
+    try {
+      const data = await fetchDigitalIdForUser(user.id);
+      setCardForm({
+        organization: data.organization ?? '',
+        position: data.position ?? '',
+        website_link: data.websiteLink ?? '',
+        contact_website: data.contact?.website ?? '',
+      });
+    } catch (err) {
+      notify(err.message, { type: 'error' });
+      setCardEditId(null);
+    } finally {
+      setCardLoading(false);
+    }
+  }
+
+  function cancelCardEdit() {
+    setCardEditId(null);
+  }
+
+  async function handleCardSave(id) {
+    setCardSavingId(id);
+    try {
+      await updateDigitalIdForUser(id, cardForm);
+      notify('Card details updated.', { type: 'success' });
+      setCardEditId(null);
+    } catch (err) {
+      notify(err.message, { type: 'error' });
+    } finally {
+      setCardSavingId(null);
+    }
+  }
+
   return (
     <div className="min-h-svh bg-cream px-6 py-14">
       <div className="mx-auto max-w-3xl">
-        <Link
-          to="/"
-          className="mb-6 inline-block text-sm font-medium text-ink-soft transition hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold"
-        >
-          ← Back to my ID
-        </Link>
         <h1 className="font-serif text-3xl font-semibold text-ink">Admin Dashboard</h1>
         <p className="mt-2 text-sm text-ink-soft">Manage users and their access.</p>
 
@@ -270,7 +371,7 @@ export default function AdminDashboard() {
           ) : (
             <ul className="divide-y divide-line">
               {users.map((u) => {
-                const rowBusy = savingId === u.id || deletingId === u.id;
+                const rowBusy = savingId === u.id || deletingId === u.id || cardSavingId === u.id;
                 return (
                   <li key={u.id} className="flex flex-col gap-3 px-6 py-4 sm:flex-row sm:items-start sm:justify-between">
                     <div>
@@ -285,6 +386,14 @@ export default function AdminDashboard() {
                         className="rounded-lg border border-line px-3 py-1.5 text-xs font-medium text-ink-soft transition hover:border-gold/60 hover:text-ink disabled:cursor-not-allowed disabled:opacity-50"
                       >
                         Edit
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => (cardEditId === u.id ? cancelCardEdit() : startCardEdit(u))}
+                        disabled={rowBusy}
+                        className="rounded-lg border border-line px-3 py-1.5 text-xs font-medium text-ink-soft transition hover:border-gold/60 hover:text-ink disabled:cursor-not-allowed disabled:opacity-50"
+                      >
+                        {cardEditId === u.id && cardLoading ? 'Loading…' : 'Card details'}
                       </button>
                       <button
                         type="button"
@@ -375,6 +484,84 @@ export default function AdminDashboard() {
                             Cancel
                           </button>
                         </div>
+                      </div>
+                    )}
+
+                    {cardEditId === u.id && (
+                      <div className="mt-3 w-full rounded-lg border border-line bg-paper p-4 sm:mt-0 sm:w-auto">
+                        <p className="mb-3 text-xs text-ink-soft">
+                          Company name, position, and the two card links — hidden from this person's own edit
+                          form, editable here only.
+                        </p>
+                        {cardLoading ? (
+                          <p className="text-sm text-ink-soft">Loading…</p>
+                        ) : (
+                          <>
+                            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                              <label className="flex flex-col gap-1">
+                                <span className="text-xs font-medium text-ink">Company name</span>
+                                <input
+                                  type="text"
+                                  value={cardForm.organization}
+                                  onChange={(e) => setCardField('organization', e.target.value)}
+                                  disabled={cardSavingId === u.id}
+                                  className="rounded-lg border border-line bg-paper px-3 py-2 text-sm text-ink outline-none transition focus:border-gold focus:ring-1 focus:ring-gold disabled:opacity-60"
+                                />
+                              </label>
+                              <label className="flex flex-col gap-1">
+                                <span className="text-xs font-medium text-ink">Position</span>
+                                <input
+                                  type="text"
+                                  value={cardForm.position}
+                                  onChange={(e) => setCardField('position', e.target.value)}
+                                  disabled={cardSavingId === u.id}
+                                  className="rounded-lg border border-line bg-paper px-3 py-2 text-sm text-ink outline-none transition focus:border-gold focus:ring-1 focus:ring-gold disabled:opacity-60"
+                                />
+                              </label>
+                              <label className="flex flex-col gap-1 sm:col-span-2">
+                                <span className="text-xs font-medium text-ink">
+                                  Website link (QR code on the front)
+                                </span>
+                                <input
+                                  type="url"
+                                  placeholder="https://www.example.com"
+                                  value={cardForm.website_link}
+                                  onChange={(e) => setCardField('website_link', e.target.value)}
+                                  disabled={cardSavingId === u.id}
+                                  className="rounded-lg border border-line bg-paper px-3 py-2 text-sm text-ink outline-none transition focus:border-gold focus:ring-1 focus:ring-gold disabled:opacity-60"
+                                />
+                              </label>
+                              <label className="flex flex-col gap-1 sm:col-span-2">
+                                <span className="text-xs font-medium text-ink">Link (shown on the card)</span>
+                                <input
+                                  type="text"
+                                  value={cardForm.contact_website}
+                                  onChange={(e) => setCardField('contact_website', e.target.value)}
+                                  disabled={cardSavingId === u.id}
+                                  className="rounded-lg border border-line bg-paper px-3 py-2 text-sm text-ink outline-none transition focus:border-gold focus:ring-1 focus:ring-gold disabled:opacity-60"
+                                />
+                              </label>
+                            </div>
+                            <div className="mt-3 flex items-center gap-2">
+                              <button
+                                type="button"
+                                onClick={() => handleCardSave(u.id)}
+                                disabled={cardSavingId === u.id}
+                                className="rounded-lg bg-ink px-3 py-1.5 text-xs font-medium text-paper transition hover:bg-ink/90 disabled:cursor-not-allowed disabled:opacity-60"
+                              >
+                                {cardSavingId === u.id ? 'Saving…' : 'Save'}
+                              </button>
+                              <button
+                                type="button"
+                                onClick={cancelCardEdit}
+                                disabled={cardSavingId === u.id}
+                                className="rounded-lg border border-line px-3 py-1.5 text-xs font-medium text-ink-soft transition hover:text-ink disabled:cursor-not-allowed disabled:opacity-50"
+                              >
+                                Cancel
+                              </button>
+                            </div>
+                          </>
+                        )}
                       </div>
                     )}
                   </li>
