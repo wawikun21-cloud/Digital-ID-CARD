@@ -345,3 +345,11 @@ export function ChevronRightIcon(props) {
     </svg>
   );
 }
+
+export function MenuIcon(props) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" width="18" height="18" {...props}>
+      <path d="M4 6.5h16M4 12h16M4 17.5h16" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
+    </svg>
+  );
+}

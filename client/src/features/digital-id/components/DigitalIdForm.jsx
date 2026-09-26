@@ -5,6 +5,7 @@ import { detectSocialPlatform } from '../utils/digitalIdUtils';
 import ProfilePhotoField from './ProfilePhotoField';
 import { processLogo } from '../utils/imageUtils';
 import { SOCIAL_ICONS } from '../utils/socialIcons';
+import { useConfirm } from '../../../shared/components/ConfirmProvider';
 
 export default function DigitalIdForm({
   digitalId,
@@ -16,10 +17,15 @@ export default function DigitalIdForm({
   onResetToDefault,
   isAdmin = false,
 }) {
-  function handleResetToDefault() {
-    const confirmed = window.confirm(
-      'Reset every field back to the default details? This clears whatever is saved here and cannot be undone.',
-    );
+  const confirm = useConfirm();
+
+  async function handleResetToDefault() {
+    const confirmed = await confirm({
+      title: 'Reset to default details?',
+      message: 'This clears whatever is saved here and cannot be undone.',
+      confirmLabel: 'Reset',
+      tone: 'danger',
+    });
     if (confirmed) onResetToDefault();
   }
 
@@ -65,12 +71,14 @@ export default function DigitalIdForm({
           value={digitalId.name}
           onChange={(value) => onUpdateField('name', value)}
         />
-        <TextField
-          id="field-position"
-          label="Position"
-          value={digitalId.position}
-          onChange={(value) => onUpdateField('position', value)}
-        />
+        {isAdmin && (
+          <TextField
+            id="field-position"
+            label="Position"
+            value={digitalId.position}
+            onChange={(value) => onUpdateField('position', value)}
+          />
+        )}
         <TextField
           id="field-secondary-role"
           label="Secondary role"
@@ -83,12 +91,14 @@ export default function DigitalIdForm({
           value={digitalId.department}
           onChange={(value) => onUpdateField('department', value)}
         />
-        <TextField
-          id="field-organization"
-          label="Company name"
-          value={digitalId.organization}
-          onChange={(value) => onUpdateField('organization', value)}
-        />
+        {isAdmin && (
+          <TextField
+            id="field-organization"
+            label="Company name"
+            value={digitalId.organization}
+            onChange={(value) => onUpdateField('organization', value)}
+          />
+        )}
         <TextAreaField
           id="field-bio"
           label="Bio / motto"
@@ -114,12 +124,14 @@ export default function DigitalIdForm({
           value={digitalId.contact.phone}
           onChange={(value) => onUpdateContactField('phone', value)}
         />
-        <TextField
-          id="field-website"
-          label="Link (shown on the card)"
-          value={digitalId.contact.website}
-          onChange={(value) => onUpdateContactField('website', value)}
-        />
+        {isAdmin && (
+          <TextField
+            id="field-website"
+            label="Link (shown on the card)"
+            value={digitalId.contact.website}
+            onChange={(value) => onUpdateContactField('website', value)}
+          />
+        )}
         <TextField
           id="field-email"
           label="Email"
@@ -129,20 +141,22 @@ export default function DigitalIdForm({
         />
       </fieldset>
 
-      <fieldset className="flex flex-col gap-3">
-        <legend className="mb-1 text-sm font-semibold text-ink">QR code</legend>
-        <TextField
-          id="field-website-link"
-          label="Website link (QR code on the front)"
-          type="url"
-          placeholder="https://www.example.com"
-          value={digitalId.websiteLink ?? ''}
-          onChange={(value) => onUpdateField('websiteLink', value)}
-        />
-        <p className="text-xs text-ink-soft">
-          The QR code on the front opens this link. Leave it empty to use the verification page.
-        </p>
-      </fieldset>
+      {isAdmin && (
+        <fieldset className="flex flex-col gap-3">
+          <legend className="mb-1 text-sm font-semibold text-ink">QR code</legend>
+          <TextField
+            id="field-website-link"
+            label="Website link (QR code on the front)"
+            type="url"
+            placeholder="https://www.example.com"
+            value={digitalId.websiteLink ?? ''}
+            onChange={(value) => onUpdateField('websiteLink', value)}
+          />
+          <p className="text-xs text-ink-soft">
+            The QR code on the front opens this link. Leave it empty to use the verification page.
+          </p>
+        </fieldset>
+      )}
 
       <fieldset className="flex flex-col gap-3">
         <legend className="mb-1 text-sm font-semibold text-ink">Social links (on the back)</legend>

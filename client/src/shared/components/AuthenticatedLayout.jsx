@@ -33,7 +33,7 @@ export default function AuthenticatedLayout({ children }) {
       <AppNav collapsed={collapsed} onToggleCollapsed={() => setCollapsed((c) => !c)} />
       <div
         className={`pb-20 transition-[padding] duration-200 ease-in-out md:pb-0 ${
-          collapsed ? 'md:pl-20' : 'md:pl-60'
+          collapsed ? 'md:pl-20' : 'md:pl-64'
         }`}
       >
         {children}

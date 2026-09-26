@@ -57,6 +57,35 @@ function stripAdminFields(body, userRole) {
   return rest;
 }
 
+// Only an admin may set these — company name, position, the front-QR
+// link, and the "Link (shown on the card)" field. Keyed by the column
+// name saveDigitalIdForUser expects; each getter reads the matching
+// property off a fetched record (see models/digitalIdModel.js#rowToRecord).
+const ADMIN_ONLY_FIELDS = {
+  organization: (current) => current.organization,
+  position: (current) => current.position,
+  website_link: (current) => current.websiteLink,
+  contact_website: (current) => current.contact?.website ?? '',
+};
+
+/**
+ * A non-admin's request keeps whatever is already saved for the
+ * admin-only fields, no matter what they submit for those keys — this
+ * runs regardless of what the client shows, so it also covers a direct
+ * API call that skips the disabled inputs entirely.
+ */
+async function lockAdminOnlyFields(body, userId, userRole) {
+  if (userRole === 'admin') {
+    return body;
+  }
+  const current = await getDigitalId(userId);
+  const locked = { ...body };
+  for (const [field, readCurrentValue] of Object.entries(ADMIN_ONLY_FIELDS)) {
+    locked[field] = readCurrentValue(current);
+  }
+  return locked;
+}
+
 export async function getDigitalIdHandler(req, res) {
   try {
     const data = await getDigitalId(req.user.id);
@@ -85,7 +114,8 @@ export async function putDigitalIdHandler(req, res) {
 
     const normalized = normalizeBody(req.body);
     const stripped = stripAdminFields(normalized, req.user.role);
-    const saved = await saveDigitalIdForUser(req.user.id, stripped, photoBuffer, null, logoBuffer);
+    const locked = await lockAdminOnlyFields(stripped, req.user.id, req.user.role);
+    const saved = await saveDigitalIdForUser(req.user.id, locked, photoBuffer, null, logoBuffer);
     res.json(saved);
   } catch (err) {
     console.error('PUT /api/digital-id error', err);

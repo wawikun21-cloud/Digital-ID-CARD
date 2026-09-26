@@ -59,8 +59,8 @@ function validateEnv() {
     missing.push('JWT_SECRET (min 32 chars)');
   }
 
-  if (env === 'production' && !process.env.DATABASE_URL) {
-    missing.push('DATABASE_URL');
+  if (env === 'production' && !process.env.DATABASE_URL && !(process.env.DB_HOST && process.env.DB_USER && process.env.DB_NAME)) {
+    missing.push('DATABASE_URL or DB_HOST/DB_USER/DB_NAME');
   }
 
   if (missing.length > 0) {

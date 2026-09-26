@@ -6,7 +6,8 @@ const env = process.env.NODE_ENV || 'development';
 function resolveDriver() {
   if (env === 'production') {
     if (process.env.DATABASE_URL) return 'pg';
-    throw new Error('DATABASE_URL is required in production');
+    if (process.env.DB_DRIVER === 'mysql') return 'mysql';
+    return 'mysql';
   }
   if (process.env.DB_DRIVER) return process.env.DB_DRIVER;
   return 'mysql';

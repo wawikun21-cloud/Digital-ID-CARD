@@ -1,7 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
 import { NavLink } from 'react-router-dom';
 import { useAuth } from '../../features/auth/AuthContext';
-import { IdCardIcon, UsersIcon, LogoutIcon, ChevronLeftIcon, ChevronRightIcon } from './icons';
+import { useConfirm } from './ConfirmProvider';
+import logoMark from '../../assets/id-card/logo-mark.png';
+import { IdCardIcon, UsersIcon, LogoutIcon, MenuIcon } from './icons';
 
 /**
  * The primary navigation for authenticated pages: a collapsible sidebar
@@ -19,18 +21,19 @@ function useNavItems() {
 }
 
 const linkBase =
-  'flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-sm font-medium transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold';
+  'flex items-center gap-3 rounded-xl px-3.5 py-3 text-sm font-medium transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold';
 const linkActive = 'bg-ink text-paper';
 const linkInactive = 'text-ink-soft hover:bg-cream hover:text-ink';
 
 export default function AppNav({ collapsed, onToggleCollapsed }) {
   const { user, logout } = useAuth();
+  const confirm = useConfirm();
   const items = useNavItems();
   const [menuOpen, setMenuOpen] = useState(false);
   const profileRef = useRef(null);
   const initial = (user?.full_name || user?.username || '?').trim().charAt(0).toUpperCase();
 
-  // Close the profile menu on an outside click, and whenever the sidebar collapses.
+  // Close the profile menu on an outside click.
   useEffect(() => {
     if (!menuOpen) return undefined;
     function handleClick(e) {
@@ -42,42 +45,53 @@ export default function AppNav({ collapsed, onToggleCollapsed }) {
     return () => document.removeEventListener('mousedown', handleClick);
   }, [menuOpen]);
 
-  useEffect(() => {
-    if (collapsed) setMenuOpen(false);
-  }, [collapsed]);
-
-  function handleLogout() {
+  async function handleLogout() {
     setMenuOpen(false);
-    if (window.confirm('Log out of your Digital ID?')) {
+    const confirmed = await confirm({
+      title: 'Log out',
+      message: 'Log out of your Digital ID?',
+      confirmLabel: 'Log out',
+    });
+    if (confirmed) {
       logout();
     }
+  }
+
+  function toggleCollapsed() {
+    setMenuOpen(false);
+    onToggleCollapsed();
   }
 
   return (
     <>
       {/* Desktop / tablet sidebar */}
       <aside
-        className={`fixed inset-y-0 left-0 z-30 hidden flex-col border-r border-line bg-paper py-6 transition-[width] duration-200 ease-in-out md:flex ${
-          collapsed ? 'w-20 px-2' : 'w-60 px-4'
+        className={`fixed inset-y-0 left-0 z-30 hidden flex-col border-r border-line bg-paper py-5 transition-[width] duration-200 ease-in-out md:flex ${
+          collapsed ? 'w-20 px-2' : 'w-64 px-3'
         }`}
       >
-        <button
-          type="button"
-          onClick={onToggleCollapsed}
-          aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-          className="absolute -right-3 top-8 flex h-6 w-6 items-center justify-center rounded-full border border-line bg-paper text-ink-soft shadow-sm transition hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold"
+        <div
+          className={`flex items-center gap-2 border-b border-line pb-4 ${collapsed ? 'justify-center' : 'px-1.5'}`}
         >
-          {collapsed ? <ChevronRightIcon /> : <ChevronLeftIcon />}
-        </button>
-
-        <div className={`flex items-center gap-2.5 ${collapsed ? 'justify-center px-0' : 'px-2'}`}>
-          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-ink text-paper">
-            <IdCardIcon width={18} height={18} />
-          </span>
-          {!collapsed && <span className="truncate font-serif text-lg font-semibold text-ink">Digital ID</span>}
+          <button
+            type="button"
+            onClick={toggleCollapsed}
+            aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+            aria-expanded={!collapsed}
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-ink-soft transition hover:bg-cream hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold"
+          >
+            <MenuIcon width={20} height={20} />
+          </button>
+          {!collapsed && (
+            <>
+              <img src={logoMark} alt="BAA Digital" className="h-6 w-auto shrink-0 object-contain" />
+              <span className="h-5 w-px shrink-0 bg-line" aria-hidden="true" />
+              <span className="truncate text-sm font-medium text-ink-soft">Digital ID</span>
+            </>
+          )}
         </div>
 
-        <nav className="mt-8 flex flex-1 flex-col gap-1">
+        <nav className="mt-5 flex flex-1 flex-col gap-1.5">
           {items.map(({ to, label, Icon, end }) => (
             <NavLink
               key={to}
@@ -88,7 +102,7 @@ export default function AppNav({ collapsed, onToggleCollapsed }) {
                 `${linkBase} ${isActive ? linkActive : linkInactive} ${collapsed ? 'justify-center px-0' : ''}`
               }
             >
-              <Icon width={18} height={18} />
+              <Icon width={20} height={20} />
               {!collapsed && label}
             </NavLink>
           ))}
@@ -104,7 +118,7 @@ export default function AppNav({ collapsed, onToggleCollapsed }) {
               collapsed ? 'justify-center px-0' : 'px-2'
             }`}
           >
-            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-cream text-sm font-semibold text-ink">
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-cream text-sm font-semibold text-ink">
               {initial}
             </span>
             {!collapsed && (
@@ -117,7 +131,7 @@ export default function AppNav({ collapsed, onToggleCollapsed }) {
 
           {menuOpen && !collapsed && (
             <button type="button" onClick={handleLogout} className={`${linkBase} ${linkInactive} mt-1 w-full`}>
-              <LogoutIcon width={18} height={18} />
+              <LogoutIcon width={20} height={20} />
               Log out
             </button>
           )}
@@ -131,7 +145,7 @@ export default function AppNav({ collapsed, onToggleCollapsed }) {
                 onClick={handleLogout}
                 className={`${linkBase} ${linkInactive} mt-2 w-full`}
               >
-                <LogoutIcon width={18} height={18} />
+                <LogoutIcon width={20} height={20} />
                 Log out
               </button>
             </div>

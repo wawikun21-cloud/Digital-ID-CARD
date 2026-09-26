@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './features/auth/AuthContext';
 import { ToastProvider } from './shared/components/ToastProvider';
+import { ConfirmProvider } from './shared/components/ConfirmProvider';
 import AuthenticatedLayout from './shared/components/AuthenticatedLayout';
 import DigitalIdPage from './features/digital-id/pages/DigitalIdPage';
 import DigitalIdViewPage from './features/digital-id/pages/DigitalIdViewPage';
@@ -59,9 +60,11 @@ export default function App() {
   return (
     <BrowserRouter>
       <ToastProvider>
-        <AuthProvider>
-          <AppRoutes />
-        </AuthProvider>
+        <ConfirmProvider>
+          <AuthProvider>
+            <AppRoutes />
+          </AuthProvider>
+        </ConfirmProvider>
       </ToastProvider>
     </BrowserRouter>
   );
